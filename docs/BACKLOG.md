@@ -33,6 +33,7 @@ A single place to track feature ideas, improvements, and bugs.
 - [ ] **YouTube Stream Indexing** - Index and link to YouTube livestream recordings of events/heats
 - [ ] **Visitor Counter** - Display site visitor/view count
 - [ ] **Comments Section** - Let users leave comments on events or athlete pages
+- [ ] **Elimination Round Display** - Show "Lost in Final", "Eliminated in Round 1", etc. on event results in italics grey text. Requires data cleaning to derive elimination round from existing results.
 
 ---
 
