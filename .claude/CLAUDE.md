@@ -80,11 +80,14 @@ Remind the user about available slash commands when relevant:
 
 | Command | When to Suggest |
 |---------|-----------------|
-| `/deploy` | User mentions deploying or pushing to production |
+| `/deploy` | User mentions deploying frontend to Vercel |
+| `/deploy-api` | User mentions deploying backend API to VM |
 | `/test` | After writing code, or user asks about testing |
 | `/new-component` | User wants to create a React component |
 | `/query-db` | User wants to check data or run a query |
 | `/add-feature` | User mentions a new idea or feature request |
+| `/ship` | User wants to commit, push, and merge to main |
+| `/commit-push` | User wants to commit and push without merging |
 
 **Prompt the user** if they haven't used commands in a while and one would help.
 

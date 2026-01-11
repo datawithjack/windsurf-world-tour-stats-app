@@ -7,7 +7,7 @@ Automatically detects environment (local vs production) and loads appropriate se
 """
 
 import os
-from typing import Literal, List
+from typing import Literal, List, Tuple, Dict
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -85,7 +85,7 @@ class Settings(BaseSettings):
         """
         return f"mysql://{self.DB_USER}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
-    def get_db_config(self) -> tuple[dict, dict]:
+    def get_db_config(self) -> Tuple[Dict, Dict]:
         """
         Get database configuration dictionaries for mysql.connector
 
