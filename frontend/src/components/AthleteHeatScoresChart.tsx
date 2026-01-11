@@ -8,9 +8,38 @@ interface HeatScoreData {
 
 interface AthleteHeatScoresChartProps {
   data: HeatScoreData[];
+  isLoading?: boolean;
 }
 
-const AthleteHeatScoresChart = ({ data }: AthleteHeatScoresChartProps) => {
+const AthleteHeatScoresChart = ({ data, isLoading = false }: AthleteHeatScoresChartProps) => {
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div>
+        {/* Legend skeleton */}
+        <div className="flex justify-center gap-6 mb-4">
+          <div className="animate-pulse flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-slate-700"></div>
+            <div className="h-4 w-28 bg-slate-700 rounded"></div>
+          </div>
+          <div className="animate-pulse flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-slate-700"></div>
+            <div className="h-4 w-28 bg-slate-700 rounded"></div>
+          </div>
+        </div>
+        {/* Chart skeleton */}
+        <div className="animate-pulse h-[300px] bg-slate-700/50 rounded-lg flex items-end justify-around p-4 gap-3">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex flex-col items-center gap-2 flex-1">
+              <div className="w-full bg-slate-600 rounded-t" style={{ height: `${30 + Math.random() * 50}%` }}></div>
+              <div className="h-3 w-10 bg-slate-600 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   // Handle empty or invalid data
   if (!data || !Array.isArray(data) || data.length === 0) {
     return (

@@ -49,13 +49,7 @@ const AthleteStatsTab = ({ eventId, selectedAthleteId, sex }: AthleteStatsTabPro
   // Fetch athlete stats from API
   const { data: athleteStats, isLoading, error } = useQuery({
     queryKey: ['athleteEventStats', eventId, selectedAthleteId, sex],
-    queryFn: async () => {
-      console.log('🔍 Fetching athlete stats:', { eventId, selectedAthleteId, sex });
-      const data = await apiService.getAthleteEventStats(eventId, selectedAthleteId!, sex);
-      console.log('📊 Athlete stats response:', data);
-      console.log('📈 Summary stats:', data?.summary_stats);
-      return data;
-    },
+    queryFn: () => apiService.getAthleteEventStats(eventId, selectedAthleteId!, sex),
     enabled: !!eventId && !!selectedAthleteId,
     retry: 1,
   });

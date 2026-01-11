@@ -66,17 +66,20 @@ const ResultsTable = ({ results, isLoading = false, onAthleteClick }: ResultsTab
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full">
+      <table className="w-full table-fixed">
         <thead>
           <tr className="border-b border-slate-700/50">
-            <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
+            <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-16">
               Rank
             </th>
-            <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
+            <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-64">
               Athlete
             </th>
-            <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
+            <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-32">
               Nationality
+            </th>
+            <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
+              Sponsor
             </th>
           </tr>
         </thead>
@@ -119,6 +122,11 @@ const ResultsTable = ({ results, isLoading = false, onAthleteClick }: ResultsTab
               </td>
               <td className="py-4 px-4">
                 <span className="text-gray-300">{result.nationality}</span>
+              </td>
+              <td className="py-4 px-4">
+                {result.pwa_sponsors && (
+                  <span className="text-gray-400 italic text-sm">{result.pwa_sponsors}</span>
+                )}
               </td>
             </tr>
           ))}

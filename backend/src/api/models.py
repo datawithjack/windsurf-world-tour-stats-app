@@ -215,6 +215,7 @@ class AthleteResult(BaseModel):
     year_of_birth: Optional[int] = Field(None, description="Year of birth")
     profile_picture_url: Optional[str] = Field(None, description="Profile picture URL")
     pwa_sail_number: Optional[str] = Field(None, description="PWA sail number")
+    pwa_sponsors: Optional[str] = Field(None, description="Athlete sponsors")
 
     # Event information
     event_db_id: int = Field(..., description="Event database ID")

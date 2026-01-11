@@ -23,6 +23,7 @@ interface MoveTypeData {
 
 interface EventStatsChartProps {
   data: MoveTypeData[];
+  isLoading?: boolean;
 }
 
 // Custom Tooltip Component
@@ -61,7 +62,34 @@ const CustomTooltip = (props: any) => {
 };
 
 
-const EventStatsChart = ({ data }: EventStatsChartProps) => {
+const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
+  if (isLoading) {
+    return (
+      <div className="w-full space-y-4">
+        {/* Legend skeleton */}
+        <div className="flex items-center justify-center gap-6">
+          <div className="animate-pulse flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-slate-700"></div>
+            <div className="h-4 w-20 bg-slate-700 rounded"></div>
+          </div>
+          <div className="animate-pulse flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-slate-700"></div>
+            <div className="h-4 w-20 bg-slate-700 rounded"></div>
+          </div>
+        </div>
+        {/* Chart skeleton */}
+        <div className="animate-pulse h-[350px] bg-slate-700/50 rounded-lg flex items-end justify-around p-4 gap-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex flex-col items-center gap-2 flex-1">
+              <div className="w-full bg-slate-600 rounded" style={{ height: `${40 + Math.random() * 60}%` }}></div>
+              <div className="h-3 w-12 bg-slate-600 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full space-y-4">
       {/* Custom Legend at Top */}

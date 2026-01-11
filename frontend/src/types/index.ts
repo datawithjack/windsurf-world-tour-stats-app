@@ -1,16 +1,3 @@
-export interface Rider {
-  id: number;
-  name: string;
-  country: string;
-  rank?: number;
-  profileImage?: string;
-  stats?: {
-    events: number;
-    wins: number;
-    podiums: number;
-  };
-}
-
 export interface Event {
   id: number;
   source: string;
@@ -49,31 +36,6 @@ export interface EventsResponse {
     has_next: boolean;
     has_prev: boolean;
   };
-}
-
-export interface Heat {
-  id: number;
-  eventId: number;
-  round: string;
-  heatNumber: number;
-  riders: number[];
-  scores?: Record<number, number>;
-  winner?: number;
-}
-
-export interface QuickStats {
-  totalEvents: number;
-  totalRiders: number;
-  totalHeats: number;
-  activeCompetitions: number;
-}
-
-export interface HeadToHead {
-  rider1Id: number;
-  rider2Id: number;
-  wins1: number;
-  wins2: number;
-  lastMeeting?: string;
 }
 
 // Event Head-to-Head Types
@@ -123,6 +85,7 @@ export interface AthleteResult {
   athlete_name: string;
   nationality: string;
   profile_picture_url: string;
+  pwa_sponsors?: string;
   event_id: number;
   event_name: string;
   event_year: number;

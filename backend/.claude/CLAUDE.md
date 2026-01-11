@@ -655,6 +655,20 @@ query getEventDivision($id: ID!) {
 
 ---
 
+## Common Patterns
+
+When creating new code, copy from these reference files:
+
+| Task | Copy From |
+|------|-----------|
+| New API endpoint | `src/api/routes/events.py` |
+| New Pydantic model | `src/api/models.py` |
+| Database query pattern | `src/api/routes/athletes.py` |
+| New scraper | `src/scrapers/pwa_event_scraper.py` |
+| Database loader | `src/database/load_pwa_events.py` |
+
+---
+
 ## Common Commands
 
 ### Database Operations

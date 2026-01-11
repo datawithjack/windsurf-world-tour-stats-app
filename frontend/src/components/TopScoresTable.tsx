@@ -2,7 +2,7 @@ import { useState } from 'react';
 import FeatureCard from './FeatureCard';
 
 interface ScoreEntry {
-  rider: string;
+  athlete: string;
   score: number;
   move?: string;
   heatNo: string;
@@ -58,7 +58,7 @@ const TopScoresTable = ({
                   #
                 </th>
                 <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                  Rider
+                  Athlete
                 </th>
                 <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   Score
@@ -82,7 +82,7 @@ const TopScoresTable = ({
                   <td className="py-3 px-4 text-sm text-gray-400 font-semibold">
                     {index + 1}
                   </td>
-                  <td className="py-3 px-4 text-sm text-white">{entry.rider}</td>
+                  <td className="py-3 px-4 text-sm text-white">{entry.athlete}</td>
                   <td className="py-3 px-4 text-sm text-right text-white font-semibold">
                     {entry.score.toFixed(2)}
                   </td>

@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { User } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiService } from '../services/api';
 import FeatureCard from './FeatureCard';
+import H2HStatBar from './H2HStatBar';
+import H2HAthleteCard from './H2HAthleteCard';
+import H2HOverviewCard from './H2HOverviewCard';
 
 interface HeadToHeadComparisonProps {
   eventId: number;
   gender: 'Men' | 'Women';
 }
 
-const HeadToHeadComparison: React.FC<HeadToHeadComparisonProps> = ({ eventId, gender }) => {
+const HeadToHeadComparison = ({ eventId, gender }: HeadToHeadComparisonProps) => {
   const [athlete1Id, setAthlete1Id] = useState<number | null>(null);
   const [athlete2Id, setAthlete2Id] = useState<number | null>(null);
   const [athlete1ImageError, setAthlete1ImageError] = useState(false);
@@ -48,134 +50,6 @@ const HeadToHeadComparison: React.FC<HeadToHeadComparisonProps> = ({ eventId, ge
   useEffect(() => {
     setAthlete2ImageError(false);
   }, [athlete2Id]);
-
-  const getPlacementSuffix = (placement: number) => {
-    const lastTwo = placement % 100;
-    // Special case for 11, 12, 13
-    if (lastTwo >= 11 && lastTwo <= 13) {
-      return 'TH';
-    }
-    const lastOne = placement % 10;
-    switch (lastOne) {
-      case 1: return 'ST';
-      case 2: return 'ND';
-      case 3: return 'RD';
-      default: return 'TH';
-    }
-  };
-
-  // Render stat comparison row with visual bars
-  const renderStatRow = (
-    label: string,
-    athlete1Value: number,
-    athlete2Value: number,
-    winner: 'athlete1' | 'athlete2' | 'tie',
-    difference: number,
-    athlete1Name: string,
-    athlete2Name: string,
-    maxValue?: number
-  ) => {
-    const localMaxValue = maxValue || Math.max(athlete1Value, athlete2Value);
-    const athlete1Percent = localMaxValue > 0 ? (athlete1Value / localMaxValue) * 100 : 0;
-    const athlete2Percent = localMaxValue > 0 ? (athlete2Value / localMaxValue) * 100 : 0;
-    const hasData = athlete1Value > 0 || athlete2Value > 0;
-
-    // Extract surname (last word of name)
-    const athlete1Surname = athlete1Name.split(' ').pop() || athlete1Name;
-    const athlete2Surname = athlete2Name.split(' ').pop() || athlete2Name;
-    const winnerName = winner === 'athlete1' ? athlete1Surname : athlete2Surname;
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.4 }}
-        className="py-4 border-b border-slate-700/30 last:border-0"
-      >
-        {/* Label */}
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-xs sm:text-sm text-gray-400 uppercase tracking-wide font-medium" style={{ fontFamily: 'var(--font-inter)' }}>
-            {label}
-          </p>
-          {winner !== 'tie' && difference > 0 && hasData && (
-            <span className={`text-xs font-semibold ${
-              winner === 'athlete2' ? 'text-teal-400' : 'text-cyan-400'
-            }`}>
-              +{difference.toFixed(2)} Advantage to {winnerName}
-            </span>
-          )}
-        </div>
-
-        {!hasData ? (
-          <div className="text-center py-4">
-            <p className="text-sm text-gray-500 italic" style={{ fontFamily: 'var(--font-inter)' }}>No Data Available</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Athlete 1 Bar */}
-            <div className="relative h-12 md:h-14 bg-slate-700/30 rounded-lg overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${athlete1Percent}%` }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
-                className={`absolute inset-y-0 left-0 rounded-lg ${
-                  winner === 'athlete1'
-                    ? 'bg-gradient-to-r from-cyan-500/80 to-cyan-400/60'
-                    : 'bg-slate-600/50'
-                }`}
-              />
-              <div className="absolute inset-0 flex items-center justify-between px-3">
-                <span
-                  className="text-sm sm:text-base font-bold text-white uppercase tracking-wide"
-                  style={{ fontFamily: 'var(--font-inter)' }}
-                >
-                  {athlete1Surname}
-                </span>
-                <span
-                  className={`text-lg sm:text-xl font-bold ${
-                    winner === 'athlete1' ? 'text-white' : 'text-gray-300'
-                  }`}
-                  style={{ fontFamily: 'var(--font-inter)' }}
-                >
-                  {athlete1Value}
-                </span>
-              </div>
-            </div>
-
-            {/* Athlete 2 Bar */}
-            <div className="relative h-12 md:h-14 bg-slate-700/30 rounded-lg overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${athlete2Percent}%` }}
-                transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
-                className={`absolute inset-y-0 left-0 rounded-lg ${
-                  winner === 'athlete2'
-                    ? 'bg-gradient-to-r from-teal-500/80 to-teal-400/60'
-                    : 'bg-slate-600/50'
-                }`}
-              />
-              <div className="absolute inset-0 flex items-center justify-between px-3">
-                <span
-                  className="text-sm sm:text-base font-bold text-white uppercase tracking-wide"
-                  style={{ fontFamily: 'var(--font-inter)' }}
-                >
-                  {athlete2Surname}
-                </span>
-                <span
-                  className={`text-lg sm:text-xl font-bold ${
-                    winner === 'athlete2' ? 'text-white' : 'text-gray-300'
-                  }`}
-                  style={{ fontFamily: 'var(--font-inter)' }}
-                >
-                  {athlete2Value}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-      </motion.div>
-    );
-  };
 
   const athletes = athleteListData?.athletes || [];
   const athlete1 = headToHeadData?.athlete1;
@@ -259,29 +133,17 @@ const HeadToHeadComparison: React.FC<HeadToHeadComparisonProps> = ({ eventId, ge
           >
             {/* Athlete Info Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-6 items-center">
-              {/* Athlete 1 - Cyan */}
-              <div className="flex flex-col items-center text-center gap-3">
-                {athlete1.profile_image && !athlete1ImageError ? (
-                  <img
-                    src={athlete1.profile_image}
-                    alt={athlete1.name}
-                    className="w-28 h-28 rounded-lg object-cover border-4 border-cyan-400"
-                    onError={() => setAthlete1ImageError(true)}
-                  />
-                ) : (
-                  <div className="w-28 h-28 bg-slate-700/50 rounded-lg flex items-center justify-center border-4 border-cyan-400">
-                    <User className="text-cyan-400" size={44} />
-                  </div>
-                )}
-                <div>
-                  <h3 className="text-xl font-bold text-cyan-400 mb-1" style={{ fontFamily: 'var(--font-inter)' }}>{athlete1.name}</h3>
-                  <p className="text-sm text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>{athlete1.nationality}</p>
-                </div>
-              </div>
+              <H2HAthleteCard
+                name={athlete1.name}
+                nationality={athlete1.nationality}
+                profileImage={athlete1.profile_image}
+                imageError={athlete1ImageError}
+                onImageError={() => setAthlete1ImageError(true)}
+                color="cyan"
+              />
 
-              {/* VS Divider - Desktop circular, Mobile horizontal */}
+              {/* VS Divider */}
               <div className="flex items-center justify-center">
-                {/* Desktop VS badge */}
                 <div className="hidden sm:flex items-center justify-center px-4">
                   <div className="w-16 h-16 rounded-full bg-slate-700/50 border-2 border-slate-600/50 flex items-center justify-center">
                     <span className="text-2xl font-bold text-gray-400" style={{ fontFamily: 'var(--font-bebas)' }}>
@@ -289,7 +151,6 @@ const HeadToHeadComparison: React.FC<HeadToHeadComparisonProps> = ({ eventId, ge
                     </span>
                   </div>
                 </div>
-                {/* Mobile VS divider */}
                 <div className="sm:hidden w-full flex items-center gap-4 py-2">
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
                   <span className="text-xl font-bold text-gray-400 px-4" style={{ fontFamily: 'var(--font-bebas)' }}>VS</span>
@@ -297,113 +158,25 @@ const HeadToHeadComparison: React.FC<HeadToHeadComparisonProps> = ({ eventId, ge
                 </div>
               </div>
 
-              {/* Athlete 2 - Teal */}
-              <div className="flex flex-col items-center text-center gap-3">
-                {athlete2.profile_image && !athlete2ImageError ? (
-                  <img
-                    src={athlete2.profile_image}
-                    alt={athlete2.name}
-                    className="w-28 h-28 rounded-lg object-cover border-4 border-teal-400"
-                    onError={() => setAthlete2ImageError(true)}
-                  />
-                ) : (
-                  <div className="w-28 h-28 bg-slate-700/50 rounded-lg flex items-center justify-center border-4 border-teal-400">
-                    <User className="text-teal-400" size={44} />
-                  </div>
-                )}
-                <div>
-                  <h3 className="text-xl font-bold text-teal-400 mb-1" style={{ fontFamily: 'var(--font-inter)' }}>{athlete2.name}</h3>
-                  <p className="text-sm text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>{athlete2.nationality}</p>
-                </div>
-              </div>
+              <H2HAthleteCard
+                name={athlete2.name}
+                nationality={athlete2.nationality}
+                profileImage={athlete2.profile_image}
+                imageError={athlete2ImageError}
+                onImageError={() => setAthlete2ImageError(true)}
+                color="teal"
+              />
             </div>
 
             {/* Stats Comparison Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              {/* Overview - Placement & Heat Wins */}
-              <FeatureCard title="Overview">
-                <div className="space-y-6">
-                  {/* Placement Comparison */}
-                  <div>
-                    <h5 className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-4 text-center" style={{ fontFamily: 'var(--font-inter)' }}>
-                      Final Placement
-                    </h5>
-                    <div className="flex items-center justify-center gap-8 py-2">
-                      <div className="text-center">
-                        <div
-                          className={`text-4xl sm:text-5xl font-bold mb-2 ${
-                            athlete1.place < athlete2.place ? 'text-cyan-400' : 'text-gray-400'
-                          }`}
-                          style={{ fontFamily: 'var(--font-bebas)' }}
-                        >
-                          {athlete1.place}{getPlacementSuffix(athlete1.place)}
-                        </div>
-                        <p className={`text-xs font-medium ${
-                          athlete1.place < athlete2.place ? 'text-cyan-400' : 'text-gray-500'
-                        }`} style={{ fontFamily: 'var(--font-inter)' }}>
-                          {athlete1.name.split(' ').pop()}
-                        </p>
-                      </div>
-                      <div className="text-xl text-gray-600 font-bold" style={{ fontFamily: 'var(--font-bebas)' }}>VS</div>
-                      <div className="text-center">
-                        <div
-                          className={`text-4xl sm:text-5xl font-bold mb-2 ${
-                            athlete2.place < athlete1.place ? 'text-teal-400' : 'text-gray-400'
-                          }`}
-                          style={{ fontFamily: 'var(--font-bebas)' }}
-                        >
-                          {athlete2.place}{getPlacementSuffix(athlete2.place)}
-                        </div>
-                        <p className={`text-xs font-medium ${
-                          athlete2.place < athlete1.place ? 'text-teal-400' : 'text-gray-500'
-                        }`} style={{ fontFamily: 'var(--font-inter)' }}>
-                          {athlete2.name.split(' ').pop()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Heat Wins */}
-                  <div className="border-t border-slate-700/30 pt-4">
-                    <h5 className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-4 text-center" style={{ fontFamily: 'var(--font-inter)' }}>
-                      Heat Wins
-                    </h5>
-                    <div className="flex items-center justify-center gap-8 py-2">
-                      <div className="text-center">
-                        <div
-                          className={`text-4xl sm:text-5xl font-bold mb-2 ${
-                            comparison.heat_wins.winner === 'athlete1' ? 'text-cyan-400' : 'text-gray-400'
-                          }`}
-                          style={{ fontFamily: 'var(--font-bebas)' }}
-                        >
-                          {comparison.heat_wins.athlete1_value}
-                        </div>
-                        <p className={`text-xs font-medium ${
-                          comparison.heat_wins.winner === 'athlete1' ? 'text-cyan-400' : 'text-gray-500'
-                        }`} style={{ fontFamily: 'var(--font-inter)' }}>
-                          {athlete1.name.split(' ').pop()}
-                        </p>
-                      </div>
-                      <div className="text-xl text-gray-600 font-bold" style={{ fontFamily: 'var(--font-bebas)' }}>VS</div>
-                      <div className="text-center">
-                        <div
-                          className={`text-4xl sm:text-5xl font-bold mb-2 ${
-                            comparison.heat_wins.winner === 'athlete2' ? 'text-teal-400' : 'text-gray-400'
-                          }`}
-                          style={{ fontFamily: 'var(--font-bebas)' }}
-                        >
-                          {comparison.heat_wins.athlete2_value}
-                        </div>
-                        <p className={`text-xs font-medium ${
-                          comparison.heat_wins.winner === 'athlete2' ? 'text-teal-400' : 'text-gray-500'
-                        }`} style={{ fontFamily: 'var(--font-inter)' }}>
-                          {athlete2.name.split(' ').pop()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </FeatureCard>
+              <H2HOverviewCard
+                athlete1Name={athlete1.name}
+                athlete2Name={athlete2.name}
+                athlete1Place={athlete1.place}
+                athlete2Place={athlete2.place}
+                heatWins={comparison.heat_wins}
+              />
 
               {/* Heat Scores */}
               <FeatureCard title="Heat Scores">
@@ -417,26 +190,26 @@ const HeadToHeadComparison: React.FC<HeadToHeadComparisonProps> = ({ eventId, ge
                     );
                     return (
                       <>
-                        {renderStatRow(
-                          'Best',
-                          comparison.heat_scores_best.athlete1_value,
-                          comparison.heat_scores_best.athlete2_value,
-                          comparison.heat_scores_best.winner,
-                          comparison.heat_scores_best.difference,
-                          athlete1.name,
-                          athlete2.name,
-                          maxHeat
-                        )}
-                        {renderStatRow(
-                          'Average',
-                          comparison.heat_scores_avg.athlete1_value,
-                          comparison.heat_scores_avg.athlete2_value,
-                          comparison.heat_scores_avg.winner,
-                          comparison.heat_scores_avg.difference,
-                          athlete1.name,
-                          athlete2.name,
-                          maxHeat
-                        )}
+                        <H2HStatBar
+                          label="Best"
+                          athlete1Value={comparison.heat_scores_best.athlete1_value}
+                          athlete2Value={comparison.heat_scores_best.athlete2_value}
+                          winner={comparison.heat_scores_best.winner}
+                          difference={comparison.heat_scores_best.difference}
+                          athlete1Name={athlete1.name}
+                          athlete2Name={athlete2.name}
+                          maxValue={maxHeat}
+                        />
+                        <H2HStatBar
+                          label="Average"
+                          athlete1Value={comparison.heat_scores_avg.athlete1_value}
+                          athlete2Value={comparison.heat_scores_avg.athlete2_value}
+                          winner={comparison.heat_scores_avg.winner}
+                          difference={comparison.heat_scores_avg.difference}
+                          athlete1Name={athlete1.name}
+                          athlete2Name={athlete2.name}
+                          maxValue={maxHeat}
+                        />
                       </>
                     );
                   })()}
@@ -455,26 +228,26 @@ const HeadToHeadComparison: React.FC<HeadToHeadComparisonProps> = ({ eventId, ge
                     );
                     return (
                       <>
-                        {renderStatRow(
-                          'Best',
-                          comparison.jumps_best.athlete1_value,
-                          comparison.jumps_best.athlete2_value,
-                          comparison.jumps_best.winner,
-                          comparison.jumps_best.difference,
-                          athlete1.name,
-                          athlete2.name,
-                          maxJumps
-                        )}
-                        {renderStatRow(
-                          'Average Counting',
-                          comparison.jumps_avg_counting.athlete1_value,
-                          comparison.jumps_avg_counting.athlete2_value,
-                          comparison.jumps_avg_counting.winner,
-                          comparison.jumps_avg_counting.difference,
-                          athlete1.name,
-                          athlete2.name,
-                          maxJumps
-                        )}
+                        <H2HStatBar
+                          label="Best"
+                          athlete1Value={comparison.jumps_best.athlete1_value}
+                          athlete2Value={comparison.jumps_best.athlete2_value}
+                          winner={comparison.jumps_best.winner}
+                          difference={comparison.jumps_best.difference}
+                          athlete1Name={athlete1.name}
+                          athlete2Name={athlete2.name}
+                          maxValue={maxJumps}
+                        />
+                        <H2HStatBar
+                          label="Average Counting"
+                          athlete1Value={comparison.jumps_avg_counting.athlete1_value}
+                          athlete2Value={comparison.jumps_avg_counting.athlete2_value}
+                          winner={comparison.jumps_avg_counting.winner}
+                          difference={comparison.jumps_avg_counting.difference}
+                          athlete1Name={athlete1.name}
+                          athlete2Name={athlete2.name}
+                          maxValue={maxJumps}
+                        />
                       </>
                     );
                   })()}
@@ -493,26 +266,26 @@ const HeadToHeadComparison: React.FC<HeadToHeadComparisonProps> = ({ eventId, ge
                     );
                     return (
                       <>
-                        {renderStatRow(
-                          'Best',
-                          comparison.waves_best.athlete1_value,
-                          comparison.waves_best.athlete2_value,
-                          comparison.waves_best.winner,
-                          comparison.waves_best.difference,
-                          athlete1.name,
-                          athlete2.name,
-                          maxWaves
-                        )}
-                        {renderStatRow(
-                          'Average Counting',
-                          comparison.waves_avg_counting.athlete1_value,
-                          comparison.waves_avg_counting.athlete2_value,
-                          comparison.waves_avg_counting.winner,
-                          comparison.waves_avg_counting.difference,
-                          athlete1.name,
-                          athlete2.name,
-                          maxWaves
-                        )}
+                        <H2HStatBar
+                          label="Best"
+                          athlete1Value={comparison.waves_best.athlete1_value}
+                          athlete2Value={comparison.waves_best.athlete2_value}
+                          winner={comparison.waves_best.winner}
+                          difference={comparison.waves_best.difference}
+                          athlete1Name={athlete1.name}
+                          athlete2Name={athlete2.name}
+                          maxValue={maxWaves}
+                        />
+                        <H2HStatBar
+                          label="Average Counting"
+                          athlete1Value={comparison.waves_avg_counting.athlete1_value}
+                          athlete2Value={comparison.waves_avg_counting.athlete2_value}
+                          winner={comparison.waves_avg_counting.winner}
+                          difference={comparison.waves_avg_counting.difference}
+                          athlete1Name={athlete1.name}
+                          athlete2Name={athlete2.name}
+                          maxValue={maxWaves}
+                        />
                       </>
                     );
                   })()}

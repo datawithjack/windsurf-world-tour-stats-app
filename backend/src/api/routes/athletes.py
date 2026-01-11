@@ -301,7 +301,7 @@ async def list_athlete_results(
             SELECT
                 result_id, result_source,
                 athlete_id, athlete_name, nationality, year_of_birth,
-                profile_picture_url, pwa_sail_number,
+                profile_picture_url, pwa_sail_number, pwa_sponsors,
                 event_db_id, event_id, event_name, event_year,
                 country_code, stars, event_image_url,
                 division_label, division_code, sex, placement,
