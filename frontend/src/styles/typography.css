@@ -1,0 +1,127 @@
+/**
+ * Typography Utility Classes
+ * Based on the WWWTS design system
+ */
+
+/* Display - Extra Large Titles (Bebas Neue) */
+.display-xl {
+  font-family: var(--font-bebas);
+  font-size: 6rem; /* 96px */
+  line-height: 1;
+  letter-spacing: 0.05em;
+  font-weight: bold;
+}
+
+.display-lg {
+  font-family: var(--font-bebas);
+  font-size: 4.5rem; /* 72px */
+  line-height: 1;
+  letter-spacing: 0.05em;
+  font-weight: bold;
+}
+
+.display-md {
+  font-family: var(--font-bebas);
+  font-size: 3.75rem; /* 60px */
+  line-height: 1;
+  letter-spacing: 0.05em;
+  font-weight: bold;
+}
+
+/* Headings (Bebas Neue) */
+.heading-xl {
+  font-family: var(--font-bebas);
+  font-size: 3rem; /* 48px */
+  line-height: 1.1;
+  letter-spacing: 0.05em;
+  font-weight: bold;
+}
+
+.heading-lg {
+  font-family: var(--font-bebas);
+  font-size: 2.25rem; /* 36px */
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  font-weight: bold;
+}
+
+.heading-md {
+  font-family: var(--font-bebas);
+  font-size: 1.875rem; /* 30px */
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  font-weight: bold;
+}
+
+.heading-sm {
+  font-family: var(--font-bebas);
+  font-size: 1.5rem; /* 24px */
+  line-height: 1.3;
+  letter-spacing: 0.05em;
+  font-weight: bold;
+}
+
+/* Body Text (Inter) */
+.body-xl {
+  font-family: var(--font-inter);
+  font-size: 1.25rem; /* 20px */
+  line-height: 1.6;
+}
+
+.body-lg {
+  font-family: var(--font-inter);
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.6;
+}
+
+.body-md {
+  font-family: var(--font-inter);
+  font-size: 1rem; /* 16px */
+  line-height: 1.6;
+}
+
+.body-sm {
+  font-family: var(--font-inter);
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.5;
+}
+
+.body-xs {
+  font-family: var(--font-inter);
+  font-size: 0.75rem; /* 12px */
+  line-height: 1.5;
+}
+
+/* Labels & Captions */
+.label-lg {
+  font-family: var(--font-inter);
+  font-size: 0.875rem; /* 14px */
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.label-md {
+  font-family: var(--font-inter);
+  font-size: 0.75rem; /* 12px */
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.label-sm {
+  font-family: var(--font-inter);
+  font-size: 0.625rem; /* 10px */
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Accent Text */
+.text-accent {
+  color: #38bdf8; /* cyan-400 */
+}
+
+.text-accent-bright {
+  color: #0ea5e9; /* cyan-500 */
+}

@@ -1,0 +1,49 @@
+@import "tailwindcss";
+@import "./styles/typography.css";
+
+@theme {
+  --color-ocean-50: #f0f9ff;
+  --color-ocean-100: #e0f2fe;
+  --color-ocean-200: #bae6fd;
+  --color-ocean-300: #7dd3fc;
+  --color-ocean-400: #38bdf8;
+  --color-ocean-500: #0ea5e9;
+  --color-ocean-600: #0284c7;
+  --color-ocean-700: #0369a1;
+  --color-ocean-800: #075985;
+  --color-ocean-900: #0c4a6e;
+  --color-ocean-950: #082f49;
+
+  /* Font families */
+  --font-bebas: 'Bebas Neue', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  color: white;
+  font-family: var(--font-inter);
+  background:
+    linear-gradient(to bottom, rgba(10, 14, 26, 0.85), rgba(10, 14, 26, 0.95)),
+    url('/images/background-1.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* Apply Bebas Neue to all headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-bebas);
+  letter-spacing: 0.05em;
+}
+
+/* Hide scrollbar while maintaining scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}

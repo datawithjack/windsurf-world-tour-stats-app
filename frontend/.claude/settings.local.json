@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git branch:*)",
+      "WebFetch(domain:windsurf-world-tour-stats-api.duckdns.org)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(curl:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git -C \"C:/Users/jackf/OneDrive/Documents/Projects/WWWTS Web App\" ls-files --cached)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
