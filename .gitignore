@@ -1,0 +1,149 @@
+# ===================
+# Node.js / Frontend
+# ===================
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===================
+# Python / Backend
+# ===================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ===================
+# Environment Variables
+# ===================
+.env
+.env.local
+.env.production
+.env.*.local
+
+# ===================
+# IDE / Editor
+# ===================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*.sw?
+*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ===================
+# OS Files
+# ===================
+.DS_Store
+Thumbs.db
+
+# ===================
+# Logs
+# ===================
+logs/
+*.log
+*.log.*
+
+# ===================
+# Database
+# ===================
+*.db
+*.sqlite
+*.sqlite3
+
+# ===================
+# Secrets / Credentials
+# ===================
+secrets/
+credentials/
+*.pem
+*.key
+*.crt
+deployment/secrets/
+ssh-key-*
+.ssh/
+
+# ===================
+# Temporary Files
+# ===================
+tmp/
+temp/
+*.tmp
+
+# ===================
+# Deployment
+# ===================
+.vercel/
+
+# ===================
+# Project-specific
+# ===================
+# Large data files (backend)
+data/raw/
+data/processed/
+data/reports/
+data/staging/*
+!data/staging/.gitkeep
+
+# Browser drivers
+chromedriver
+chromedriver.exe
+geckodriver
+geckodriver.exe
+
+# Scraped content
+*.html
+*.htm
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# ===================
+# Keep these files
+# ===================
+!requirements.txt
+!.claude/
+!.claude/CLAUDE.md
+!README.md
+!DEPLOYMENT.md
