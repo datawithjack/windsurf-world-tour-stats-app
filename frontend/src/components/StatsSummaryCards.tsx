@@ -66,162 +66,123 @@ const formatSubtitle = (scoreData: BestScore, type: 'heat' | 'jump' | 'wave') =>
 };
 
 const FlipCard = ({ title, scoreData, type }: FlipCardProps) => {
-  const [isFlipped, setIsFlipped] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // For heat cards with breakdown, use expand instead of flip
+  // Determine what can be expanded
   const hasBreakdown = type === 'heat' && scoreData.breakdown &&
     (scoreData.breakdown.waves.length > 0 || scoreData.breakdown.jumps.length > 0);
-  const canFlip = scoreData.has_multiple_tied && !hasBreakdown;
-  const canExpand = hasBreakdown && !scoreData.has_multiple_tied;
-
-  const handleClick = () => {
-    if (canFlip) {
-      setIsFlipped(!isFlipped);
-    }
-  };
+  const hasTiedScores = scoreData.has_multiple_tied && scoreData.all_tied_scores && scoreData.all_tied_scores.length > 0;
+  const canExpand = hasBreakdown || hasTiedScores;
 
   const handleExpandClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsExpanded(!isExpanded);
   };
 
+  // Determine expand button text
+  const getExpandButtonText = () => {
+    if (hasBreakdown) {
+      return isExpanded ? 'Hide Counting Scores' : 'Show Counting Scores';
+    }
+    if (hasTiedScores) {
+      return isExpanded ? 'Hide Tied Scores' : `Show Tied Scores (${scoreData.all_tied_scores?.length})`;
+    }
+    return '';
+  };
+
   return (
-    <div
-      className={`relative ${canFlip ? 'cursor-pointer' : ''}`}
-      style={{ perspective: '1000px' }}
-      onClick={handleClick}
-    >
-      <motion.div
-        className="relative w-full"
-        style={{
-          transformStyle: 'preserve-3d',
-        }}
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.6, ease: 'easeInOut' }}
+    <div className="relative">
+      <div
+        className="w-full bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6 transition-all duration-300 hover:bg-slate-800/60 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10"
+        style={{ minHeight: '180px' }}
       >
-        {/* Front of card */}
-        <motion.div
-          className={`w-full bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6 transition-all duration-300 hover:bg-slate-800/60 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10 ${isFlipped ? 'absolute' : 'relative'}`}
-          style={{
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden',
-            minHeight: '180px',
-          }}
-          animate={{
-            opacity: isFlipped ? 0 : 1,
-          }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
-        >
-          <h3 className="text-base font-medium text-white mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
-            {title}
-          </h3>
-          <p className="text-4xl font-bold text-white mb-2">{scoreData.score != null ? scoreData.score.toFixed(2) : '0.00'} pts</p>
-          <p className="text-xs text-gray-400">
-            {scoreData.has_multiple_tied ? (
-              <span className="text-gray-300 font-semibold">Multiple (Click to see)</span>
-            ) : (
-              formatSubtitle(scoreData, type)
-            )}
-          </p>
+        <h3 className="text-base font-medium text-white mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
+          {title}
+        </h3>
+        <p className="text-4xl font-bold text-white mb-2">{scoreData.score != null ? scoreData.score.toFixed(2) : '0.00'} pts</p>
+        <p className="text-xs text-gray-400">
+          {formatSubtitle(scoreData, type)}
+        </p>
 
-          {/* Expandable breakdown for heat cards */}
-          {canExpand && (
-            <div className="mt-4">
-              <button
-                onClick={handleExpandClick}
-                className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
-              >
-                {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                {isExpanded ? 'Hide' : 'Show'} Counting Scores
-              </button>
+        {/* Expandable section */}
+        {canExpand && (
+          <div className="mt-4">
+            <button
+              onClick={handleExpandClick}
+              className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+            >
+              {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              {getExpandButtonText()}
+            </button>
 
-              <AnimatePresence>
-                {isExpanded && scoreData.breakdown && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="mt-3 space-y-3">
-                      {/* Waves breakdown */}
-                      {scoreData.breakdown.waves.length > 0 && (
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Top Waves</p>
-                          <div className="flex gap-2">
-                            {scoreData.breakdown.waves.map((wave, idx) => (
-                              <div key={idx} className="bg-slate-900/40 border border-slate-700/30 rounded px-2 py-1">
-                                <span className="text-sm text-white font-medium">{wave.score.toFixed(2)}</span>
-                              </div>
-                            ))}
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-3 space-y-3">
+                    {/* Heat score breakdown (waves + jumps) */}
+                    {hasBreakdown && scoreData.breakdown && (
+                      <>
+                        {scoreData.breakdown.waves.length > 0 && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Top Waves</p>
+                            <div className="flex gap-2">
+                              {scoreData.breakdown.waves.map((wave, idx) => (
+                                <div key={idx} className="bg-slate-900/40 border border-slate-700/30 rounded px-2 py-1">
+                                  <span className="text-sm text-white font-medium">{wave.score.toFixed(2)}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* Jumps breakdown */}
-                      {scoreData.breakdown.jumps.length > 0 && (
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Top Jumps</p>
-                          <div className="flex gap-2 flex-wrap">
-                            {scoreData.breakdown.jumps.map((jump, idx) => (
-                              <div key={idx} className="bg-slate-900/40 border border-slate-700/30 rounded px-2 py-1">
-                                <span className="text-sm text-white font-medium">{jump.score.toFixed(2)}</span>
-                                <span className="text-xs text-gray-400 ml-1">{jump.move_type}</span>
-                              </div>
-                            ))}
+                        {scoreData.breakdown.jumps.length > 0 && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Top Jumps</p>
+                            <div className="flex gap-2 flex-wrap">
+                              {scoreData.breakdown.jumps.map((jump, idx) => (
+                                <div key={idx} className="bg-slate-900/40 border border-slate-700/30 rounded px-2 py-1">
+                                  <span className="text-sm text-white font-medium">{jump.score.toFixed(2)}</span>
+                                  <span className="text-xs text-gray-400 ml-1">{jump.move_type}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-        </motion.div>
-
-        {/* Back of card */}
-        {canFlip && scoreData.all_tied_scores && (
-          <motion.div
-            className={`w-full bg-slate-800/40 backdrop-blur-sm border border-cyan-500/50 rounded-lg ${isFlipped ? 'relative' : 'absolute'}`}
-            style={{
-              backfaceVisibility: 'hidden',
-              WebkitBackfaceVisibility: 'hidden',
-              transform: 'rotateY(180deg)',
-            }}
-            animate={{
-              opacity: isFlipped ? 1 : 0,
-            }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-          >
-            <div className="p-6">
-              <h3 className="text-base font-medium text-white mb-3" style={{ fontFamily: 'var(--font-inter)' }}>
-                All Tied Scores
-              </h3>
-              <div className="space-y-2">
-                {scoreData.all_tied_scores.map((tied, index) => (
-                  <div
-                    key={`${tied.athlete_id}-${tied.heat_number}-${index}`}
-                    className="bg-slate-900/40 border border-slate-700/30 rounded p-2"
-                  >
-                    <p className="text-sm font-semibold text-white">{tied.athlete_name}</p>
-                    <p className="text-xs text-gray-400">
-                      {tied.round_name && `${tied.round_name} - `}Heat {tied.heat_number}
-                    </p>
-                    {type === 'jump' && tied.move_type && (
-                      <p className="text-xs text-gray-400">{tied.move_type}</p>
+                        )}
+                      </>
                     )}
-                    <p className="text-xs text-gray-300 font-semibold mt-1">{tied.score != null ? tied.score.toFixed(2) : '0.00'} pts</p>
+
+                    {/* Tied scores list */}
+                    {hasTiedScores && scoreData.all_tied_scores && (
+                      <div className="space-y-2">
+                        {scoreData.all_tied_scores.map((tied, index) => (
+                          <div
+                            key={`${tied.athlete_id}-${tied.heat_number}-${index}`}
+                            className="bg-slate-900/40 border border-slate-700/30 rounded p-2"
+                          >
+                            <p className="text-sm font-semibold text-white">{tied.athlete_name}</p>
+                            <p className="text-xs text-gray-400">
+                              {tied.round_name && `${tied.round_name} - `}Heat {tied.heat_number}
+                            </p>
+                            {type === 'jump' && tied.move_type && (
+                              <p className="text-xs text-gray-400">{tied.move_type}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500 mt-3 text-center italic">Click to flip back</p>
-            </div>
-          </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 };

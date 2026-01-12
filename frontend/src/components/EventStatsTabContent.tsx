@@ -4,18 +4,30 @@ import StatsSummaryCards from './StatsSummaryCards';
 import EventStatsChart from './EventStatsChart';
 import type { EventStatsResponse } from '../types';
 
-// Row count selector for tables
-const RowCountSelector = ({ value, onChange }: { value: number; onChange: (v: 10 | 25 | 50) => void }) => (
-  <select
-    value={value}
-    onChange={(e) => onChange(Number(e.target.value) as 10 | 25 | 50)}
-    className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-2 py-1 rounded text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
-  >
-    <option value={10}>10 rows</option>
-    <option value={25}>25 rows</option>
-    <option value={50}>50 rows</option>
-  </select>
-);
+// Show More button for tables - increments visible rows
+const ShowMoreButton = ({
+  currentCount,
+  totalCount,
+  increment = 10,
+  onShowMore,
+}: {
+  currentCount: number;
+  totalCount: number;
+  increment?: number;
+  onShowMore: () => void;
+}) => {
+  const remaining = totalCount - currentCount;
+  if (remaining <= 0) return null;
+
+  return (
+    <button
+      onClick={onShowMore}
+      className="w-full py-2 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-slate-800/40 transition-colors rounded-b-lg border-t border-slate-700/30"
+    >
+      Show More ({Math.min(remaining, increment)} more, {remaining} remaining)
+    </button>
+  );
+};
 
 // Filter dropdown component
 const FilterDropdown = ({
@@ -113,10 +125,13 @@ const transformStatsData = (statsData: EventStatsResponse): TransformedStatsData
   })) || [],
 });
 
+const DEFAULT_ROWS = 10;
+const ROW_INCREMENT = 10;
+
 const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventStatsTabContentProps) => {
-  const [heatScoresLimit, setHeatScoresLimit] = useState<10 | 25 | 50>(10);
-  const [jumpScoresLimit, setJumpScoresLimit] = useState<10 | 25 | 50>(10);
-  const [waveScoresLimit, setWaveScoresLimit] = useState<10 | 25 | 50>(10);
+  const [heatScoresLimit, setHeatScoresLimit] = useState(DEFAULT_ROWS);
+  const [jumpScoresLimit, setJumpScoresLimit] = useState(DEFAULT_ROWS);
+  const [waveScoresLimit, setWaveScoresLimit] = useState(DEFAULT_ROWS);
 
   // Filter state
   const [roundFilter, setRoundFilter] = useState<string>('');
@@ -241,40 +256,47 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
           <FeatureCard
             title="Top Heat Scores"
             isLoading={false}
-            headerAction={<RowCountSelector value={heatScoresLimit} onChange={setHeatScoresLimit} />}
           >
             {filteredHeatScores.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-slate-700/50">
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Athlete</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Score</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Round</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Heat</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredHeatScores.slice(0, heatScoresLimit).map((entry, index) => (
-                      <tr key={index} className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200">
-                        <td className="py-3 px-4 text-sm text-gray-400 font-semibold">{index + 1}</td>
-                        <td className="py-3 px-4 text-sm">
-                          <button
-                            onClick={() => onAthleteClick(entry.athleteId)}
-                            className="text-white hover:text-cyan-400 transition-colors cursor-pointer text-left"
-                          >
-                            {entry.athlete}
-                          </button>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-right text-white font-semibold">{entry.score.toFixed(2)}</td>
-                        <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.round || '-'}</td>
-                        <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.heatNo}</td>
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-slate-700/50">
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Athlete</th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Score</th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Round</th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Heat</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {filteredHeatScores.slice(0, heatScoresLimit).map((entry, index) => (
+                        <tr key={index} className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200">
+                          <td className="py-3 px-4 text-sm text-gray-400 font-semibold">{index + 1}</td>
+                          <td className="py-3 px-4 text-sm">
+                            <button
+                              onClick={() => onAthleteClick(entry.athleteId)}
+                              className="text-white hover:text-cyan-400 transition-colors cursor-pointer text-left"
+                            >
+                              {entry.athlete}
+                            </button>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-right text-white font-semibold">{entry.score.toFixed(2)}</td>
+                          <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.round || '-'}</td>
+                          <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.heatNo}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <ShowMoreButton
+                  currentCount={Math.min(heatScoresLimit, filteredHeatScores.length)}
+                  totalCount={filteredHeatScores.length}
+                  increment={ROW_INCREMENT}
+                  onShowMore={() => setHeatScoresLimit((prev) => prev + ROW_INCREMENT)}
+                />
+              </>
             ) : (
               <div className="text-gray-400 text-center py-12">
                 <p className="text-sm text-gray-500">{(roundFilter || heatFilter) ? 'No results match the current filters' : 'Heat scores data not available from API'}</p>
@@ -291,45 +313,52 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
             <FeatureCard
               title="Top Jump Scores"
               isLoading={false}
-              headerAction={<RowCountSelector value={jumpScoresLimit} onChange={setJumpScoresLimit} />}
             >
               {filteredJumpScores.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-slate-700/50">
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Athlete</th>
-                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Score</th>
-                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Move</th>
-                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Round</th>
-                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Heat</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredJumpScores.slice(0, jumpScoresLimit).map((entry, index) => (
-                        <tr
-                          key={index}
-                          className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200"
-                        >
-                          <td className="py-3 px-4 text-sm text-gray-400 font-semibold">{index + 1}</td>
-                          <td className="py-3 px-4 text-sm">
-                            <button
-                              onClick={() => onAthleteClick(entry.athleteId)}
-                              className="text-white hover:text-cyan-400 transition-colors cursor-pointer text-left"
-                            >
-                              {entry.athlete}
-                            </button>
-                          </td>
-                          <td className="py-3 px-4 text-sm text-right text-white font-semibold">{entry.score.toFixed(2)}</td>
-                          <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.move}</td>
-                          <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.round || '-'}</td>
-                          <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.heatNo}</td>
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-700/50">
+                          <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
+                          <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Athlete</th>
+                          <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Score</th>
+                          <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Move</th>
+                          <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Round</th>
+                          <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Heat</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {filteredJumpScores.slice(0, jumpScoresLimit).map((entry, index) => (
+                          <tr
+                            key={index}
+                            className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200"
+                          >
+                            <td className="py-3 px-4 text-sm text-gray-400 font-semibold">{index + 1}</td>
+                            <td className="py-3 px-4 text-sm">
+                              <button
+                                onClick={() => onAthleteClick(entry.athleteId)}
+                                className="text-white hover:text-cyan-400 transition-colors cursor-pointer text-left"
+                              >
+                                {entry.athlete}
+                              </button>
+                            </td>
+                            <td className="py-3 px-4 text-sm text-right text-white font-semibold">{entry.score.toFixed(2)}</td>
+                            <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.move}</td>
+                            <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.round || '-'}</td>
+                            <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.heatNo}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <ShowMoreButton
+                    currentCount={Math.min(jumpScoresLimit, filteredJumpScores.length)}
+                    totalCount={filteredJumpScores.length}
+                    increment={ROW_INCREMENT}
+                    onShowMore={() => setJumpScoresLimit((prev) => prev + ROW_INCREMENT)}
+                  />
+                </>
               ) : (
                 <div className="text-gray-400 text-center py-12">
                   <p className="text-sm text-gray-500">{(roundFilter || heatFilter) ? 'No results match the current filters' : 'Jump scores data not available'}</p>
@@ -342,43 +371,50 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
             <FeatureCard
               title="Top Wave Scores"
               isLoading={false}
-              headerAction={<RowCountSelector value={waveScoresLimit} onChange={setWaveScoresLimit} />}
             >
               {filteredWaveScores.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-slate-700/50">
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Athlete</th>
-                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Score</th>
-                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Round</th>
-                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Heat</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredWaveScores.slice(0, waveScoresLimit).map((entry, index) => (
-                        <tr
-                          key={index}
-                          className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200"
-                        >
-                          <td className="py-3 px-4 text-sm text-gray-400 font-semibold">{index + 1}</td>
-                          <td className="py-3 px-4 text-sm">
-                            <button
-                              onClick={() => onAthleteClick(entry.athleteId)}
-                              className="text-white hover:text-cyan-400 transition-colors cursor-pointer text-left"
-                            >
-                              {entry.athlete}
-                            </button>
-                          </td>
-                          <td className="py-3 px-4 text-sm text-right text-white font-semibold">{entry.score.toFixed(2)}</td>
-                          <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.round || '-'}</td>
-                          <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.heatNo}</td>
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-700/50">
+                          <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
+                          <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Athlete</th>
+                          <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Score</th>
+                          <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Round</th>
+                          <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Heat</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {filteredWaveScores.slice(0, waveScoresLimit).map((entry, index) => (
+                          <tr
+                            key={index}
+                            className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200"
+                          >
+                            <td className="py-3 px-4 text-sm text-gray-400 font-semibold">{index + 1}</td>
+                            <td className="py-3 px-4 text-sm">
+                              <button
+                                onClick={() => onAthleteClick(entry.athleteId)}
+                                className="text-white hover:text-cyan-400 transition-colors cursor-pointer text-left"
+                              >
+                                {entry.athlete}
+                              </button>
+                            </td>
+                            <td className="py-3 px-4 text-sm text-right text-white font-semibold">{entry.score.toFixed(2)}</td>
+                            <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.round || '-'}</td>
+                            <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.heatNo}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <ShowMoreButton
+                    currentCount={Math.min(waveScoresLimit, filteredWaveScores.length)}
+                    totalCount={filteredWaveScores.length}
+                    increment={ROW_INCREMENT}
+                    onShowMore={() => setWaveScoresLimit((prev) => prev + ROW_INCREMENT)}
+                  />
+                </>
               ) : (
                 <div className="text-gray-400 text-center py-12">
                   <p className="text-sm text-gray-500">{(roundFilter || heatFilter) ? 'No results match the current filters' : 'Wave scores data not available'}</p>

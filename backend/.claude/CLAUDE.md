@@ -399,6 +399,45 @@ CREATE TABLE ATHLETE_SOURCE_IDS (
 )
 ```
 
+### 8. SCORE_TYPES (Move Type Lookup)
+**Records**: 16 move type mappings
+
+Lookup table to expand abbreviated move type codes to full names.
+
+```sql
+CREATE TABLE SCORE_TYPES (
+    Type TEXT,          -- Abbreviation (e.g., "B", "F", "2xF")
+    Type_Name TEXT      -- Full name (e.g., "Back Loop", "Forward Loop")
+)
+```
+
+**Contents**:
+| Type | Type_Name |
+|------|-----------|
+| B | Back Loop |
+| F | Forward Loop |
+| 2xF | Double Forward Loop |
+| 3xF | Triple Forward Loop |
+| P | Push Loop |
+| PF | Push Loop Forward |
+| PT | Push Loop Table Top |
+| T | Table Top |
+| TF | Table Top Forward |
+| T2xF | Table Top Double Forward |
+| AC | Air Cachoo |
+| AIR SPOCK | Air Spock |
+| SHAKKA | Shaka |
+| Wave | Wave |
+| OTHER | Other |
+| CR | Unknown |
+
+**Usage**: Join with `PWA_IWT_HEAT_SCORES.type` to get full move names:
+```sql
+SELECT hs.score, COALESCE(st.Type_Name, hs.type) as move_type
+FROM PWA_IWT_HEAT_SCORES hs
+LEFT JOIN SCORE_TYPES st ON TRIM(hs.type) = st.Type
+```
+
 ### Database Views (For API)
 
 #### ATHLETE_RESULTS_VIEW

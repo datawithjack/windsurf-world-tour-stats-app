@@ -595,6 +595,87 @@ import TableRowTooltip from '@/components/TableRowTooltip';
 **Design Philosophy:**
 Follows "Show, Don't Tell" - hide non-essential data by default, reveal on interaction. Maintains consistent frosted glass aesthetic with cyan accent border to match interactive elements.
 
+### ShowMoreButton
+Progressive disclosure pattern for tables - shows initial rows and allows loading more.
+
+```jsx
+// ShowMoreButton component (defined in EventStatsTabContent.tsx)
+const ShowMoreButton = ({
+  currentCount,
+  totalCount,
+  increment = 10,
+  onShowMore,
+}: {
+  currentCount: number;
+  totalCount: number;
+  increment?: number;
+  onShowMore: () => void;
+}) => {
+  const remaining = totalCount - currentCount;
+  if (remaining <= 0) return null;
+
+  return (
+    <button
+      onClick={onShowMore}
+      className="w-full py-2 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-slate-800/40 transition-colors rounded-b-lg border-t border-slate-700/30"
+    >
+      Show More ({Math.min(remaining, increment)} more, {remaining} remaining)
+    </button>
+  );
+};
+
+// Usage with table
+const [limit, setLimit] = useState(10);
+const INCREMENT = 10;
+
+<FeatureCard title="Top Scores">
+  <table>...</table>
+  <ShowMoreButton
+    currentCount={Math.min(limit, data.length)}
+    totalCount={data.length}
+    increment={INCREMENT}
+    onShowMore={() => setLimit((prev) => prev + INCREMENT)}
+  />
+</FeatureCard>
+```
+
+**Props:**
+- `currentCount` (required): Number of items currently shown
+- `totalCount` (required): Total number of items available
+- `increment` (optional, default: 10): How many more items to show on click
+- `onShowMore` (required): Callback function to increase the limit
+
+**Styling:**
+- Full width: `w-full`
+- Text: `text-xs text-cyan-400 hover:text-cyan-300`
+- Background on hover: `hover:bg-slate-800/40`
+- Border: `border-t border-slate-700/30`
+- Rounded bottom: `rounded-b-lg`
+- Transition: `transition-colors`
+
+**Behavior:**
+- Button only appears when there are more items to show
+- Displays count of items to load and total remaining
+- Increments visible count by a fixed amount (default 10)
+- Disappears automatically when all items are shown
+
+**Design Philosophy:**
+Replaces dropdown selectors (10/25/50 rows) with progressive disclosure. Better UX because:
+- Single clear action instead of choosing numbers
+- Lower cognitive load
+- Mobile-friendly (buttons > selects)
+- Consistent with "Show, Don't Tell" principle
+
+**When to Use:**
+- Tables with more than 10 potential rows
+- Lists where users may want to see more data
+- Any paginated content within a card
+
+**When NOT to Use:**
+- Tables with < 10 rows (no benefit)
+- When users typically need all data at once
+- When server-side pagination is required (use proper pagination instead)
+
 ### Stat Cards (Data Visualization)
 For displaying individual metrics and statistics.
 

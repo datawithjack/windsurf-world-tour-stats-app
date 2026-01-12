@@ -301,7 +301,7 @@ async def get_event_stats(
                 INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
                 INNER JOIN ATHLETE_SOURCE_IDS asi_r ON r.source = asi_r.source AND r.athlete_id = asi_r.source_id
                 LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
-                LEFT JOIN SCORE_TYPES st ON st.Type = s.type
+                LEFT JOIN SCORE_TYPES st ON st.Type = TRIM(s.type)
                 WHERE e.id = %s AND r.sex = %s AND asi.athlete_id = asi_r.athlete_id
             ),
             RankedScores AS (
@@ -347,6 +347,7 @@ async def get_event_stats(
                         athlete_name=stat['athlete_name'],
                         athlete_id=stat['athlete_id'],
                         heat_number=stat['heat_number'],
+                        round_name=stat['round_name'],
                         score=stat['best_score']
                     )
                 ))
@@ -459,7 +460,7 @@ async def get_event_stats(
                     SELECT s.score, COALESCE(st.Type_Name, s.type) as move_type
                     FROM PWA_IWT_HEAT_SCORES s
                     INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
-                    LEFT JOIN SCORE_TYPES st ON st.Type = s.type
+                    LEFT JOIN SCORE_TYPES st ON st.Type = TRIM(s.type)
                     WHERE s.heat_id = %s AND asi.athlete_id = %s
                       AND s.type != 'Wave' AND COALESCE(s.counting, FALSE) = TRUE
                     ORDER BY s.score DESC
@@ -508,7 +509,7 @@ async def get_event_stats(
                 INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
                 INNER JOIN ATHLETE_SOURCE_IDS asi_r ON r.source = asi_r.source AND r.athlete_id = asi_r.source_id
                 LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
-                LEFT JOIN SCORE_TYPES st ON st.Type = s.type
+                LEFT JOIN SCORE_TYPES st ON st.Type = TRIM(s.type)
                 WHERE e.id = %s AND r.sex = %s AND asi.athlete_id = asi_r.athlete_id
                   AND s.type != 'Wave'
                   AND s.score = %s
@@ -611,7 +612,7 @@ async def get_event_stats(
             INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
             INNER JOIN ATHLETE_SOURCE_IDS asi_r ON r.source = asi_r.source AND r.athlete_id = asi_r.source_id
             LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
-            LEFT JOIN SCORE_TYPES st ON st.Type = s.type
+            LEFT JOIN SCORE_TYPES st ON st.Type = TRIM(s.type)
             WHERE e.id = %s AND r.sex = %s AND asi.athlete_id = asi_r.athlete_id
               AND s.type != 'Wave'
             ORDER BY s.score DESC
@@ -966,7 +967,7 @@ async def get_athlete_event_stats(
             JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
             JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
             LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
-            LEFT JOIN SCORE_TYPES st ON st.Type = s.type
+            LEFT JOIN SCORE_TYPES st ON st.Type = TRIM(s.type)
             LEFT JOIN PWA_IWT_HEAT_SCORES opp_s
                 ON opp_s.heat_id = s.heat_id
                 AND opp_s.athlete_id != s.athlete_id
@@ -1020,7 +1021,7 @@ async def get_athlete_event_stats(
             FROM PWA_IWT_HEAT_SCORES s
             JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
             JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
-            LEFT JOIN SCORE_TYPES st ON st.Type = s.type
+            LEFT JOIN SCORE_TYPES st ON st.Type = TRIM(s.type)
             WHERE asi.athlete_id = %s AND e.id = %s
             GROUP BY s.type, st.Type_Name
             ORDER BY best_score DESC
@@ -1061,7 +1062,7 @@ async def get_athlete_event_stats(
             JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
             JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
             LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
-            LEFT JOIN SCORE_TYPES st ON st.Type = s.type
+            LEFT JOIN SCORE_TYPES st ON st.Type = TRIM(s.type)
             WHERE asi.athlete_id = %s AND e.id = %s AND s.type != 'Wave'
             ORDER BY s.score DESC
         """
