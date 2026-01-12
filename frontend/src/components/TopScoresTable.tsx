@@ -6,6 +6,7 @@ interface ScoreEntry {
   score: number;
   move?: string;
   heatNo: string;
+  round?: string;
 }
 
 interface TopScoresTableProps {
@@ -69,7 +70,10 @@ const TopScoresTable = ({
                   </th>
                 )}
                 <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                  Heat No
+                  Round
+                </th>
+                <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                  Heat
                 </th>
               </tr>
             </thead>
@@ -91,6 +95,9 @@ const TopScoresTable = ({
                       {entry.move}
                     </td>
                   )}
+                  <td className="py-3 px-4 text-sm text-right text-gray-400">
+                    {entry.round || '-'}
+                  </td>
                   <td className="py-3 px-4 text-sm text-right text-gray-400">
                     {entry.heatNo}
                   </td>

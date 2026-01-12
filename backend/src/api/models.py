@@ -724,6 +724,7 @@ class BestScoredBy(BaseModel):
     athlete_name: Optional[str] = Field(None, description="Athlete name")
     athlete_id: Optional[int] = Field(None, description="Unified athlete ID")
     heat_number: Optional[str] = Field(None, description="Heat number/identifier")
+    round_name: Optional[str] = Field(None, description="Round name (e.g., 'Final', 'Semi-Finals')")
     score: Optional[float] = Field(None, description="Score value")
 
     class Config:

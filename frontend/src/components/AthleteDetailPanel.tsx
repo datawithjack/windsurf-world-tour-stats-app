@@ -19,6 +19,7 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
     bestBy: {
       athlete: data.profile?.name || '',
       heat: '',
+      round: '',
       score: score.best_score,
     },
   })) || [];

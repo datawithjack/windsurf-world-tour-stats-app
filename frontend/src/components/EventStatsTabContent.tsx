@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import FeatureCard from './FeatureCard';
 import StatsSummaryCards from './StatsSummaryCards';
 import EventStatsChart from './EventStatsChart';
-import TableRowTooltip from './TableRowTooltip';
 import type { EventStatsResponse } from '../types';
 
 // Row count selector for tables
@@ -18,6 +17,35 @@ const RowCountSelector = ({ value, onChange }: { value: number; onChange: (v: 10
   </select>
 );
 
+// Filter dropdown component
+const FilterDropdown = ({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (v: string) => void;
+}) => (
+  <div className="flex items-center gap-2">
+    <span className="text-xs text-gray-400">{label}:</span>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-2 py-1 rounded text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+    >
+      <option value="">All</option>
+      {options.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
 interface TransformedStatsData {
   summaryCards: {
     bestHeatScore: EventStatsResponse['summary_stats']['best_heat_score'];
@@ -29,11 +57,11 @@ interface TransformedStatsData {
     best: number;
     average: number;
     fleetAverage: number;
-    bestBy: { athlete: string; heat: string; score: number } | null;
+    bestBy: { athlete: string; heat: string; round: string; score: number } | null;
   }[];
-  topHeatScores: { athlete: string; athleteId: number; score: number; heatNo: string }[];
-  topJumpScores: { athlete: string; athleteId: number; score: number; move: string; heatNo: string }[];
-  topWaveScores: { athlete: string; athleteId: number; score: number; heatNo: string }[];
+  topHeatScores: { athlete: string; athleteId: number; score: number; heatNo: string; round: string }[];
+  topJumpScores: { athlete: string; athleteId: number; score: number; move: string; heatNo: string; round: string }[];
+  topWaveScores: { athlete: string; athleteId: number; score: number; heatNo: string; round: string }[];
 }
 
 interface EventStatsTabContentProps {
@@ -57,6 +85,7 @@ const transformStatsData = (statsData: EventStatsResponse): TransformedStatsData
     bestBy: stat.best_scored_by ? {
       athlete: stat.best_scored_by.athlete_name,
       heat: stat.best_scored_by.heat_number?.toString() || '',
+      round: stat.best_scored_by.round_name || '',
       score: stat.best_scored_by.score,
     } : null,
   })) || [],
@@ -65,6 +94,7 @@ const transformStatsData = (statsData: EventStatsResponse): TransformedStatsData
     athleteId: score.athlete_id,
     score: score.score,
     heatNo: score.heat_number?.toString() || '',
+    round: score.round_name || '',
   })) || [],
   topJumpScores: statsData.top_jump_scores?.map(score => ({
     athlete: score.athlete_name,
@@ -72,12 +102,14 @@ const transformStatsData = (statsData: EventStatsResponse): TransformedStatsData
     score: score.score,
     move: score.move_type || 'Unknown',
     heatNo: score.heat_number?.toString() || '',
+    round: score.round_name || '',
   })) || [],
   topWaveScores: statsData.top_wave_scores?.map(score => ({
     athlete: score.athlete_name,
     athleteId: score.athlete_id,
     score: score.score,
     heatNo: score.heat_number?.toString() || '',
+    round: score.round_name || '',
   })) || [],
 });
 
@@ -85,6 +117,37 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
   const [heatScoresLimit, setHeatScoresLimit] = useState<10 | 25 | 50>(10);
   const [jumpScoresLimit, setJumpScoresLimit] = useState<10 | 25 | 50>(10);
   const [waveScoresLimit, setWaveScoresLimit] = useState<10 | 25 | 50>(10);
+
+  // Filter state
+  const [roundFilter, setRoundFilter] = useState<string>('');
+  const [heatFilter, setHeatFilter] = useState<string>('');
+
+  // Extract unique rounds and heats from all tables
+  const { uniqueRounds, uniqueHeats } = useMemo(() => {
+    if (!statsData) return { uniqueRounds: [], uniqueHeats: [] };
+
+    const rounds = new Set<string>();
+    const heats = new Set<string>();
+
+    // Collect from all score tables
+    [...(statsData.top_heat_scores || []),
+     ...(statsData.top_jump_scores || []),
+     ...(statsData.top_wave_scores || [])].forEach((score) => {
+      if (score.round_name) rounds.add(score.round_name);
+      if (score.heat_number) heats.add(score.heat_number);
+    });
+
+    return {
+      uniqueRounds: Array.from(rounds).sort(),
+      uniqueHeats: Array.from(heats).sort((a, b) => {
+        // Sort heats numerically if possible
+        const numA = parseInt(a.replace(/\D/g, ''));
+        const numB = parseInt(b.replace(/\D/g, ''));
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return a.localeCompare(b);
+      }),
+    };
+  }, [statsData]);
 
   if (isLoading) {
     return (
@@ -110,6 +173,19 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
 
   const data = transformStatsData(statsData);
 
+  // Apply filters to table data
+  const filterScores = <T extends { round: string; heatNo: string }>(scores: T[]): T[] => {
+    return scores.filter((score) => {
+      if (roundFilter && score.round !== roundFilter) return false;
+      if (heatFilter && score.heatNo !== heatFilter) return false;
+      return true;
+    });
+  };
+
+  const filteredHeatScores = filterScores(data.topHeatScores);
+  const filteredJumpScores = filterScores(data.topJumpScores);
+  const filteredWaveScores = filterScores(data.topWaveScores);
+
   return (
     <div className="space-y-8">
       {/* Summary Cards */}
@@ -119,6 +195,40 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
           bestJumpScore={data.summaryCards.bestJumpScore}
           bestWaveScore={data.summaryCards.bestWaveScore}
         />
+      )}
+
+      {/* Filters */}
+      {(uniqueRounds.length > 0 || uniqueHeats.length > 0) && (
+        <div className="flex flex-wrap items-center gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/30">
+          <span className="text-sm font-medium text-gray-300">Filter Tables:</span>
+          {uniqueRounds.length > 0 && (
+            <FilterDropdown
+              label="Round"
+              value={roundFilter}
+              options={uniqueRounds}
+              onChange={setRoundFilter}
+            />
+          )}
+          {uniqueHeats.length > 0 && (
+            <FilterDropdown
+              label="Heat"
+              value={heatFilter}
+              options={uniqueHeats}
+              onChange={setHeatFilter}
+            />
+          )}
+          {(roundFilter || heatFilter) && (
+            <button
+              onClick={() => {
+                setRoundFilter('');
+                setHeatFilter('');
+              }}
+              className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
       )}
 
       {/* Bar Chart and Top Heat Scores */}
@@ -133,7 +243,7 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
             isLoading={false}
             headerAction={<RowCountSelector value={heatScoresLimit} onChange={setHeatScoresLimit} />}
           >
-            {data.topHeatScores.length > 0 ? (
+            {filteredHeatScores.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -141,11 +251,12 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Athlete</th>
                       <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Score</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Heat No</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Round</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Heat</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {data.topHeatScores.slice(0, heatScoresLimit).map((entry, index) => (
+                    {filteredHeatScores.slice(0, heatScoresLimit).map((entry, index) => (
                       <tr key={index} className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200">
                         <td className="py-3 px-4 text-sm text-gray-400 font-semibold">{index + 1}</td>
                         <td className="py-3 px-4 text-sm">
@@ -157,6 +268,7 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
                           </button>
                         </td>
                         <td className="py-3 px-4 text-sm text-right text-white font-semibold">{entry.score.toFixed(2)}</td>
+                        <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.round || '-'}</td>
                         <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.heatNo}</td>
                       </tr>
                     ))}
@@ -165,7 +277,7 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
               </div>
             ) : (
               <div className="text-gray-400 text-center py-12">
-                <p className="text-sm text-gray-500">Heat scores data not available from API</p>
+                <p className="text-sm text-gray-500">{(roundFilter || heatFilter) ? 'No results match the current filters' : 'Heat scores data not available from API'}</p>
               </div>
             )}
           </FeatureCard>
@@ -181,39 +293,48 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
               isLoading={false}
               headerAction={<RowCountSelector value={jumpScoresLimit} onChange={setJumpScoresLimit} />}
             >
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-slate-700/50">
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Athlete</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Score</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Move</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.topJumpScores.slice(0, jumpScoresLimit).map((entry, index) => (
-                      <TableRowTooltip
-                        key={index}
-                        content={`Heat ${entry.heatNo}`}
-                        className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200 cursor-help"
-                      >
-                        <td className="py-3 px-4 text-sm text-gray-400 font-semibold">{index + 1}</td>
-                        <td className="py-3 px-4 text-sm">
-                          <button
-                            onClick={() => onAthleteClick(entry.athleteId)}
-                            className="text-white hover:text-cyan-400 transition-colors cursor-pointer text-left"
-                          >
-                            {entry.athlete}
-                          </button>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-right text-white font-semibold">{entry.score.toFixed(2)}</td>
-                        <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.move}</td>
-                      </TableRowTooltip>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {filteredJumpScores.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-slate-700/50">
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Athlete</th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Score</th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Move</th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Round</th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Heat</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredJumpScores.slice(0, jumpScoresLimit).map((entry, index) => (
+                        <tr
+                          key={index}
+                          className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200"
+                        >
+                          <td className="py-3 px-4 text-sm text-gray-400 font-semibold">{index + 1}</td>
+                          <td className="py-3 px-4 text-sm">
+                            <button
+                              onClick={() => onAthleteClick(entry.athleteId)}
+                              className="text-white hover:text-cyan-400 transition-colors cursor-pointer text-left"
+                            >
+                              {entry.athlete}
+                            </button>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-right text-white font-semibold">{entry.score.toFixed(2)}</td>
+                          <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.move}</td>
+                          <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.round || '-'}</td>
+                          <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.heatNo}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-gray-400 text-center py-12">
+                  <p className="text-sm text-gray-500">{(roundFilter || heatFilter) ? 'No results match the current filters' : 'Jump scores data not available'}</p>
+                </div>
+              )}
             </FeatureCard>
           )}
 
@@ -223,37 +344,46 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
               isLoading={false}
               headerAction={<RowCountSelector value={waveScoresLimit} onChange={setWaveScoresLimit} />}
             >
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-slate-700/50">
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Athlete</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.topWaveScores.slice(0, waveScoresLimit).map((entry, index) => (
-                      <TableRowTooltip
-                        key={index}
-                        content={`Heat ${entry.heatNo}`}
-                        className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200 cursor-help"
-                      >
-                        <td className="py-3 px-4 text-sm text-gray-400 font-semibold">{index + 1}</td>
-                        <td className="py-3 px-4 text-sm">
-                          <button
-                            onClick={() => onAthleteClick(entry.athleteId)}
-                            className="text-white hover:text-cyan-400 transition-colors cursor-pointer text-left"
-                          >
-                            {entry.athlete}
-                          </button>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-right text-white font-semibold">{entry.score.toFixed(2)}</td>
-                      </TableRowTooltip>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {filteredWaveScores.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-slate-700/50">
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">#</th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Athlete</th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Score</th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Round</th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Heat</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredWaveScores.slice(0, waveScoresLimit).map((entry, index) => (
+                        <tr
+                          key={index}
+                          className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200"
+                        >
+                          <td className="py-3 px-4 text-sm text-gray-400 font-semibold">{index + 1}</td>
+                          <td className="py-3 px-4 text-sm">
+                            <button
+                              onClick={() => onAthleteClick(entry.athleteId)}
+                              className="text-white hover:text-cyan-400 transition-colors cursor-pointer text-left"
+                            >
+                              {entry.athlete}
+                            </button>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-right text-white font-semibold">{entry.score.toFixed(2)}</td>
+                          <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.round || '-'}</td>
+                          <td className="py-3 px-4 text-sm text-right text-gray-400">{entry.heatNo}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-gray-400 text-center py-12">
+                  <p className="text-sm text-gray-500">{(roundFilter || heatFilter) ? 'No results match the current filters' : 'Wave scores data not available'}</p>
+                </div>
+              )}
             </FeatureCard>
           )}
         </div>

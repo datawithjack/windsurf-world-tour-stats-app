@@ -108,18 +108,31 @@ export interface AthleteResultsResponse {
 }
 
 // Event Stats Types
+export interface BreakdownScore {
+  score: number;
+  move_type: string;
+}
+
+export interface HeatScoreBreakdown {
+  waves: BreakdownScore[];
+  jumps: BreakdownScore[];
+}
+
 export interface BestScoreDetail {
   score: number;
   athlete_name: string;
   athlete_id: string;
   heat_number: string;
+  round_name?: string;
   move_type?: string;
+  breakdown?: HeatScoreBreakdown | null;
   has_multiple_tied: boolean;
   all_tied_scores: {
     score: number;
     athlete_name: string;
     athlete_id: string;
     heat_number: string;
+    round_name?: string;
     move_type?: string;
   }[] | null;
 }
@@ -133,6 +146,7 @@ export interface MoveTypeStat {
     athlete_name: string;
     athlete_id: string;
     heat_number: string;
+    round_name?: string;
     score: number;
   };
 }
@@ -143,6 +157,7 @@ export interface TopScore {
   athlete_id: number;
   score: number;
   heat_number: string;
+  round_name?: string;
   move_type?: string;
 }
 

@@ -1,11 +1,23 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+
+interface BreakdownScore {
+  score: number;
+  move_type: string;
+}
+
+interface HeatScoreBreakdown {
+  waves: BreakdownScore[];
+  jumps: BreakdownScore[];
+}
 
 interface TiedScore {
   score: number;
   athlete_name: string;
   athlete_id: string;
   heat_number: string;
+  round_name?: string;
   move_type?: string;
 }
 
@@ -14,9 +26,11 @@ interface BestScore {
   athlete_name: string;
   athlete_id: string;
   heat_number: string;
+  round_name?: string;
   has_multiple_tied: boolean;
   all_tied_scores: TiedScore[] | null;
   move_type?: string;
+  breakdown?: HeatScoreBreakdown | null;
 }
 
 interface StatsSummaryCardsProps {
@@ -31,14 +45,52 @@ interface FlipCardProps {
   type: 'heat' | 'jump' | 'wave';
 }
 
+// Helper to format subtitle: "Full Name - Round (Heat No)"
+const formatSubtitle = (scoreData: BestScore, type: 'heat' | 'jump' | 'wave') => {
+  const parts: string[] = [scoreData.athlete_name];
+
+  if (scoreData.round_name) {
+    parts.push(scoreData.round_name);
+  }
+
+  parts.push(`(Heat ${scoreData.heat_number})`);
+
+  return (
+    <>
+      {parts.join(' - ')}
+      {type === 'jump' && scoreData.move_type && (
+        <span className="block mt-1">{scoreData.move_type}</span>
+      )}
+    </>
+  );
+};
+
 const FlipCard = ({ title, scoreData, type }: FlipCardProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // For heat cards with breakdown, use expand instead of flip
+  const hasBreakdown = type === 'heat' && scoreData.breakdown &&
+    (scoreData.breakdown.waves.length > 0 || scoreData.breakdown.jumps.length > 0);
+  const canFlip = scoreData.has_multiple_tied && !hasBreakdown;
+  const canExpand = hasBreakdown && !scoreData.has_multiple_tied;
+
+  const handleClick = () => {
+    if (canFlip) {
+      setIsFlipped(!isFlipped);
+    }
+  };
+
+  const handleExpandClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
+  };
 
   return (
     <div
-      className={`relative ${scoreData.has_multiple_tied ? 'cursor-pointer' : ''}`}
+      className={`relative ${canFlip ? 'cursor-pointer' : ''}`}
       style={{ perspective: '1000px' }}
-      onClick={() => scoreData.has_multiple_tied && setIsFlipped(!isFlipped)}
+      onClick={handleClick}
     >
       <motion.div
         className="relative w-full"
@@ -69,18 +121,69 @@ const FlipCard = ({ title, scoreData, type }: FlipCardProps) => {
             {scoreData.has_multiple_tied ? (
               <span className="text-gray-300 font-semibold">Multiple (Click to see)</span>
             ) : (
-              <>
-                {scoreData.athlete_name} - Heat {scoreData.heat_number}
-                {type === 'jump' && scoreData.move_type && (
-                  <span className="block mt-1">{scoreData.move_type}</span>
-                )}
-              </>
+              formatSubtitle(scoreData, type)
             )}
           </p>
+
+          {/* Expandable breakdown for heat cards */}
+          {canExpand && (
+            <div className="mt-4">
+              <button
+                onClick={handleExpandClick}
+                className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+              >
+                {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                {isExpanded ? 'Hide' : 'Show'} Counting Scores
+              </button>
+
+              <AnimatePresence>
+                {isExpanded && scoreData.breakdown && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-3 space-y-3">
+                      {/* Waves breakdown */}
+                      {scoreData.breakdown.waves.length > 0 && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Top Waves</p>
+                          <div className="flex gap-2">
+                            {scoreData.breakdown.waves.map((wave, idx) => (
+                              <div key={idx} className="bg-slate-900/40 border border-slate-700/30 rounded px-2 py-1">
+                                <span className="text-sm text-white font-medium">{wave.score.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Jumps breakdown */}
+                      {scoreData.breakdown.jumps.length > 0 && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Top Jumps</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {scoreData.breakdown.jumps.map((jump, idx) => (
+                              <div key={idx} className="bg-slate-900/40 border border-slate-700/30 rounded px-2 py-1">
+                                <span className="text-sm text-white font-medium">{jump.score.toFixed(2)}</span>
+                                <span className="text-xs text-gray-400 ml-1">{jump.move_type}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </motion.div>
 
         {/* Back of card */}
-        {scoreData.has_multiple_tied && scoreData.all_tied_scores && (
+        {canFlip && scoreData.all_tied_scores && (
           <motion.div
             className={`w-full bg-slate-800/40 backdrop-blur-sm border border-cyan-500/50 rounded-lg ${isFlipped ? 'relative' : 'absolute'}`}
             style={{
@@ -104,7 +207,9 @@ const FlipCard = ({ title, scoreData, type }: FlipCardProps) => {
                     className="bg-slate-900/40 border border-slate-700/30 rounded p-2"
                   >
                     <p className="text-sm font-semibold text-white">{tied.athlete_name}</p>
-                    <p className="text-xs text-gray-400">Heat {tied.heat_number}</p>
+                    <p className="text-xs text-gray-400">
+                      {tied.round_name && `${tied.round_name} - `}Heat {tied.heat_number}
+                    </p>
                     {type === 'jump' && tied.move_type && (
                       <p className="text-xs text-gray-400">{tied.move_type}</p>
                     )}

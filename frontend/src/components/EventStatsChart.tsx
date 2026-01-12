@@ -17,6 +17,7 @@ interface MoveTypeData {
   bestBy: {
     athlete: string;
     heat: string;
+    round: string;
     score: number;
   } | null;
 }
@@ -43,10 +44,10 @@ const CustomTooltip = (props: any) => {
               Best: {data.best != null ? data.best.toFixed(2) : '0.00'} pts
             </p>
             <p className="text-xs text-gray-400">
-              {data.bestBy.athlete}
+              by {data.bestBy.athlete}
             </p>
             <p className="text-xs text-gray-400">
-              Heat {data.bestBy.heat}
+              {data.bestBy.round ? `${data.bestBy.round} (Heat ${data.bestBy.heat})` : `Heat ${data.bestBy.heat}`}
             </p>
           </>
         ) : (
@@ -54,7 +55,7 @@ const CustomTooltip = (props: any) => {
             {payload[0].name}: {payload[0].value != null ? payload[0].value.toFixed(2) : '0.00'} pts
           </p>
         )}
-              </div>
+      </div>
     );
   }
 
