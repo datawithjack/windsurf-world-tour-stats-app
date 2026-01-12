@@ -17,7 +17,8 @@ from ..models import (
     AthleteListResponse, AthleteListItem, AthleteListMetadata,
     AthleteStatsResponse, AthleteProfile, AthleteSummaryStats,
     BestHeatScore, BestJumpScore, BestWaveScore,
-    MoveTypeScore, HeatScore, JumpScore, WaveScore, AthleteStatsMetadata
+    MoveTypeScore, HeatScore, JumpScore, WaveScore, AthleteStatsMetadata,
+    HeatScoreBreakdown, BreakdownScore
 )
 from ..config import settings
 from datetime import datetime
@@ -281,31 +282,54 @@ async def get_event_stats(
 
         # 2. Get move type statistics with best scores (single query!)
         move_stats_query = """
-            WITH RankedScores AS (
+            WITH BaseScores AS (
+                SELECT
+                    COALESCE(st.Type_Name, s.type) as move_type,
+                    s.score,
+                    a.primary_name as athlete_name,
+                    asi.athlete_id,
+                    s.heat_id,
+                    CASE
+                        WHEN s.source = 'PWA' THEN SUBSTRING_INDEX(s.heat_id, '_', -1)
+                        ELSE s.heat_id
+                    END as heat_number,
+                    hp.round_name
+                FROM PWA_IWT_HEAT_SCORES s
+                INNER JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+                INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
+                INNER JOIN ATHLETES a ON asi.athlete_id = a.id
+                INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
+                INNER JOIN ATHLETE_SOURCE_IDS asi_r ON r.source = asi_r.source AND r.athlete_id = asi_r.source_id
+                LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
+                LEFT JOIN SCORE_TYPES st ON st.Type = s.type
+                WHERE e.id = %s AND r.sex = %s AND asi.athlete_id = asi_r.athlete_id
+            ),
+            RankedScores AS (
                 SELECT
                     move_type,
                     score,
                     athlete_name,
                     athlete_id,
-                    heat_id,
+                    heat_number,
+                    round_name,
                     ROW_NUMBER() OVER (PARTITION BY move_type ORDER BY score DESC) as rn
-                FROM EVENT_STATS_VIEW
-                WHERE event_db_id = %s AND sex = %s
+                FROM BaseScores
             )
             SELECT
                 rs.move_type,
                 rs.score as best_score,
-                (SELECT ROUND(AVG(score), 2)
-                 FROM EVENT_STATS_VIEW
-                 WHERE event_db_id = %s AND sex = %s AND move_type = rs.move_type) as average_score,
+                (SELECT ROUND(AVG(bs.score), 2)
+                 FROM BaseScores bs
+                 WHERE bs.move_type = rs.move_type) as average_score,
                 rs.athlete_name,
                 rs.athlete_id,
-                rs.heat_id as heat_number
+                rs.heat_number,
+                rs.round_name
             FROM RankedScores rs
             WHERE rs.rn = 1
             ORDER BY rs.score DESC
         """
-        move_stats_results = db.execute_query(move_stats_query, (event_id, sex, event_id, sex))
+        move_stats_results = db.execute_query(move_stats_query, (event_id, sex))
 
         # Build move type stats and extract best scores for summary
         move_type_stats = []
@@ -334,6 +358,7 @@ async def get_event_stats(
                         'athlete_name': stat['athlete_name'],
                         'athlete_id': stat['athlete_id'],
                         'heat_number': stat['heat_number'],
+                        'round_name': stat['round_name'],
                         'move_type': stat['move_type']
                     }
 
@@ -343,22 +368,29 @@ async def get_event_stats(
                         'score': stat['best_score'],
                         'athlete_name': stat['athlete_name'],
                         'athlete_id': stat['athlete_id'],
-                        'heat_number': stat['heat_number']
+                        'heat_number': stat['heat_number'],
+                        'round_name': stat['round_name']
                     }
 
         # 3. Get best heat score (from heat results)
-        # Join through unified ATHLETES table to get correct sex when heat results sex field is empty
+        # Join through unified ATHLETES table to get correct sex and full name
         best_heat_query = """
             SELECT
                 ROUND(hr.result_total, 2) as score,
-                hr.athlete_name,
+                a.primary_name as athlete_name,
                 asi_hr.athlete_id,
-                hr.heat_id as heat_number
+                CASE
+                    WHEN hr.source = 'PWA' THEN SUBSTRING_INDEX(hr.heat_id, '_', -1)
+                    ELSE hr.heat_id
+                END as heat_number,
+                hp.round_name
             FROM PWA_IWT_HEAT_RESULTS hr
             INNER JOIN PWA_IWT_EVENTS e ON hr.source = e.source AND hr.pwa_event_id = e.event_id
             INNER JOIN ATHLETE_SOURCE_IDS asi_hr ON hr.source = asi_hr.source AND hr.athlete_id = asi_hr.source_id
+            INNER JOIN ATHLETES a ON asi_hr.athlete_id = a.id
             INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
             INNER JOIN ATHLETE_SOURCE_IDS asi_r ON r.source = asi_r.source AND r.athlete_id = asi_r.source_id
+            LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = hr.heat_id
             WHERE e.id = %s AND r.sex = %s AND asi_hr.athlete_id = asi_r.athlete_id
             ORDER BY hr.result_total DESC
             LIMIT 1
@@ -372,31 +404,87 @@ async def get_event_stats(
             all_best_heats_query = """
                 SELECT
                     ROUND(hr.result_total, 2) as score,
-                    hr.athlete_name,
+                    a.primary_name as athlete_name,
                     asi_hr.athlete_id,
-                    hr.heat_id as heat_number
+                    CASE
+                        WHEN hr.source = 'PWA' THEN SUBSTRING_INDEX(hr.heat_id, '_', -1)
+                        ELSE hr.heat_id
+                    END as heat_number,
+                    hp.round_name
                 FROM PWA_IWT_HEAT_RESULTS hr
                 INNER JOIN PWA_IWT_EVENTS e ON hr.source = e.source AND hr.pwa_event_id = e.event_id
                 INNER JOIN ATHLETE_SOURCE_IDS asi_hr ON hr.source = asi_hr.source AND hr.athlete_id = asi_hr.source_id
+                INNER JOIN ATHLETES a ON asi_hr.athlete_id = a.id
                 INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
                 INNER JOIN ATHLETE_SOURCE_IDS asi_r ON r.source = asi_r.source AND r.athlete_id = asi_r.source_id
+                LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = hr.heat_id
                 WHERE e.id = %s AND r.sex = %s AND asi_hr.athlete_id = asi_r.athlete_id
                   AND ROUND(hr.result_total, 2) = %s
-                ORDER BY hr.athlete_name
+                ORDER BY a.primary_name
             """
             all_best_heats = db.execute_query(all_best_heats_query, (event_id, sex, best_heat_score_value))
+
+            # Get breakdown for the best heat score (top 2 counting waves + top 2 counting jumps)
+            # We need the original heat_id (before stripping prefix) to query scores
+            # The best_heat result has the stripped heat_number, so we need to get the original
+            breakdown_heat_id_query = """
+                SELECT hr.heat_id
+                FROM PWA_IWT_HEAT_RESULTS hr
+                INNER JOIN PWA_IWT_EVENTS e ON hr.source = e.source AND hr.pwa_event_id = e.event_id
+                INNER JOIN ATHLETE_SOURCE_IDS asi ON hr.source = asi.source AND hr.athlete_id = asi.source_id
+                WHERE e.id = %s AND asi.athlete_id = %s
+                  AND ROUND(hr.result_total, 2) = %s
+                LIMIT 1
+            """
+            heat_id_result = db.execute_query(breakdown_heat_id_query, (event_id, best_heat['athlete_id'], best_heat['score']), fetch_one=True)
+
+            breakdown = None
+            if heat_id_result:
+                original_heat_id = heat_id_result['heat_id']
+
+                # Get top 2 counting wave scores
+                breakdown_waves_query = """
+                    SELECT s.score, 'Wave' as move_type
+                    FROM PWA_IWT_HEAT_SCORES s
+                    INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
+                    WHERE s.heat_id = %s AND asi.athlete_id = %s
+                      AND s.type = 'Wave' AND COALESCE(s.counting, FALSE) = TRUE
+                    ORDER BY s.score DESC
+                    LIMIT 2
+                """
+                wave_scores = db.execute_query(breakdown_waves_query, (original_heat_id, best_heat['athlete_id']))
+
+                # Get top 2 counting jump scores
+                breakdown_jumps_query = """
+                    SELECT s.score, COALESCE(st.Type_Name, s.type) as move_type
+                    FROM PWA_IWT_HEAT_SCORES s
+                    INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
+                    LEFT JOIN SCORE_TYPES st ON st.Type = s.type
+                    WHERE s.heat_id = %s AND asi.athlete_id = %s
+                      AND s.type != 'Wave' AND COALESCE(s.counting, FALSE) = TRUE
+                    ORDER BY s.score DESC
+                    LIMIT 2
+                """
+                jump_scores = db.execute_query(breakdown_jumps_query, (original_heat_id, best_heat['athlete_id']))
+
+                if wave_scores or jump_scores:
+                    breakdown = HeatScoreBreakdown(
+                        waves=[BreakdownScore(**row) for row in wave_scores] if wave_scores else [],
+                        jumps=[BreakdownScore(**row) for row in jump_scores] if jump_scores else []
+                    )
 
             # Create ScoreDetail with nested tied scores if multiple
             if all_best_heats and len(all_best_heats) > 1:
                 # Convert all tied scores to ScoreDetail objects (excluding has_multiple_tied and all_tied_scores)
-                all_tied = [ScoreDetail(**{**row, 'has_multiple_tied': False, 'all_tied_scores': None}) for row in all_best_heats]
+                all_tied = [ScoreDetail(**{**row, 'has_multiple_tied': False, 'all_tied_scores': None, 'breakdown': None}) for row in all_best_heats]
                 best_heat_score_obj = ScoreDetail(
                     **best_heat,
+                    breakdown=breakdown,
                     has_multiple_tied=True,
                     all_tied_scores=all_tied
                 )
             else:
-                best_heat_score_obj = ScoreDetail(**best_heat, has_multiple_tied=False, all_tied_scores=None)
+                best_heat_score_obj = ScoreDetail(**best_heat, breakdown=breakdown, has_multiple_tied=False, all_tied_scores=None)
 
         # 3b. Get all jump scores tied for best and populate nested fields
         best_jump_score_obj = None
@@ -404,16 +492,27 @@ async def get_event_stats(
             best_jump_score_value = best_jump['score']
             all_best_jumps_query = """
                 SELECT
-                    score,
-                    athlete_name,
-                    athlete_id,
-                    heat_id as heat_number,
-                    move_type
-                FROM EVENT_STATS_VIEW
-                WHERE event_db_id = %s AND sex = %s
-                  AND move_type != 'Wave'
-                  AND score = %s
-                ORDER BY athlete_name
+                    s.score,
+                    a.primary_name as athlete_name,
+                    asi.athlete_id,
+                    CASE
+                        WHEN s.source = 'PWA' THEN SUBSTRING_INDEX(s.heat_id, '_', -1)
+                        ELSE s.heat_id
+                    END as heat_number,
+                    hp.round_name,
+                    COALESCE(st.Type_Name, s.type) as move_type
+                FROM PWA_IWT_HEAT_SCORES s
+                INNER JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+                INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
+                INNER JOIN ATHLETES a ON asi.athlete_id = a.id
+                INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
+                INNER JOIN ATHLETE_SOURCE_IDS asi_r ON r.source = asi_r.source AND r.athlete_id = asi_r.source_id
+                LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
+                LEFT JOIN SCORE_TYPES st ON st.Type = s.type
+                WHERE e.id = %s AND r.sex = %s AND asi.athlete_id = asi_r.athlete_id
+                  AND s.type != 'Wave'
+                  AND s.score = %s
+                ORDER BY a.primary_name
             """
             all_best_jumps = db.execute_query(all_best_jumps_query, (event_id, sex, best_jump_score_value))
 
@@ -434,15 +533,25 @@ async def get_event_stats(
             best_wave_score_value = best_wave['score']
             all_best_waves_query = """
                 SELECT
-                    score,
-                    athlete_name,
-                    athlete_id,
-                    heat_id as heat_number
-                FROM EVENT_STATS_VIEW
-                WHERE event_db_id = %s AND sex = %s
-                  AND move_type = 'Wave'
-                  AND score = %s
-                ORDER BY athlete_name
+                    s.score,
+                    a.primary_name as athlete_name,
+                    asi.athlete_id,
+                    CASE
+                        WHEN s.source = 'PWA' THEN SUBSTRING_INDEX(s.heat_id, '_', -1)
+                        ELSE s.heat_id
+                    END as heat_number,
+                    hp.round_name
+                FROM PWA_IWT_HEAT_SCORES s
+                INNER JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+                INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
+                INNER JOIN ATHLETES a ON asi.athlete_id = a.id
+                INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
+                INNER JOIN ATHLETE_SOURCE_IDS asi_r ON r.source = asi_r.source AND r.athlete_id = asi_r.source_id
+                LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
+                WHERE e.id = %s AND r.sex = %s AND asi.athlete_id = asi_r.athlete_id
+                  AND s.type = 'Wave'
+                  AND s.score = %s
+                ORDER BY a.primary_name
             """
             all_best_waves = db.execute_query(all_best_waves_query, (event_id, sex, best_wave_score_value))
 
@@ -461,15 +570,21 @@ async def get_event_stats(
         heat_scores_query = """
             SELECT
                 ROW_NUMBER() OVER (ORDER BY hr.result_total DESC) as `rank`,
-                hr.athlete_name,
+                a.primary_name as athlete_name,
                 asi_hr.athlete_id,
                 ROUND(hr.result_total, 2) as score,
-                hr.heat_id as heat_number
+                CASE
+                    WHEN hr.source = 'PWA' THEN SUBSTRING_INDEX(hr.heat_id, '_', -1)
+                    ELSE hr.heat_id
+                END as heat_number,
+                hp.round_name
             FROM PWA_IWT_HEAT_RESULTS hr
             INNER JOIN PWA_IWT_EVENTS e ON hr.source = e.source AND hr.pwa_event_id = e.event_id
             INNER JOIN ATHLETE_SOURCE_IDS asi_hr ON hr.source = asi_hr.source AND hr.athlete_id = asi_hr.source_id
+            INNER JOIN ATHLETES a ON asi_hr.athlete_id = a.id
             INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
             INNER JOIN ATHLETE_SOURCE_IDS asi_r ON r.source = asi_r.source AND r.athlete_id = asi_r.source_id
+            LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = hr.heat_id
             WHERE e.id = %s AND r.sex = %s AND asi_hr.athlete_id = asi_r.athlete_id
             ORDER BY hr.result_total DESC
         """
@@ -479,17 +594,27 @@ async def get_event_stats(
         # 5. Get all jump scores (non-Wave, sorted by score descending)
         jump_scores_query = """
             SELECT
-                ROW_NUMBER() OVER (ORDER BY score DESC) as `rank`,
-                athlete_name,
-                athlete_id,
-                score,
-                move_type,
-                heat_id as heat_number
-            FROM EVENT_STATS_VIEW
-            WHERE event_db_id = %s
-              AND sex = %s
-              AND move_type != 'Wave'
-            ORDER BY score DESC
+                ROW_NUMBER() OVER (ORDER BY s.score DESC) as `rank`,
+                a.primary_name as athlete_name,
+                asi.athlete_id,
+                s.score,
+                COALESCE(st.Type_Name, s.type) as move_type,
+                CASE
+                    WHEN s.source = 'PWA' THEN SUBSTRING_INDEX(s.heat_id, '_', -1)
+                    ELSE s.heat_id
+                END as heat_number,
+                hp.round_name
+            FROM PWA_IWT_HEAT_SCORES s
+            INNER JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+            INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
+            INNER JOIN ATHLETES a ON asi.athlete_id = a.id
+            INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
+            INNER JOIN ATHLETE_SOURCE_IDS asi_r ON r.source = asi_r.source AND r.athlete_id = asi_r.source_id
+            LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
+            LEFT JOIN SCORE_TYPES st ON st.Type = s.type
+            WHERE e.id = %s AND r.sex = %s AND asi.athlete_id = asi_r.athlete_id
+              AND s.type != 'Wave'
+            ORDER BY s.score DESC
         """
         jump_scores = db.execute_query(jump_scores_query, (event_id, sex))
         top_jump_scores = [JumpScoreEntry(**row) for row in jump_scores] if jump_scores else []
@@ -497,16 +622,25 @@ async def get_event_stats(
         # 6. Get all wave scores (sorted by score descending)
         wave_scores_query = """
             SELECT
-                ROW_NUMBER() OVER (ORDER BY score DESC) as `rank`,
-                athlete_name,
-                athlete_id,
-                score,
-                heat_id as heat_number
-            FROM EVENT_STATS_VIEW
-            WHERE event_db_id = %s
-              AND sex = %s
-              AND move_type = 'Wave'
-            ORDER BY score DESC
+                ROW_NUMBER() OVER (ORDER BY s.score DESC) as `rank`,
+                a.primary_name as athlete_name,
+                asi.athlete_id,
+                s.score,
+                CASE
+                    WHEN s.source = 'PWA' THEN SUBSTRING_INDEX(s.heat_id, '_', -1)
+                    ELSE s.heat_id
+                END as heat_number,
+                hp.round_name
+            FROM PWA_IWT_HEAT_SCORES s
+            INNER JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+            INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
+            INNER JOIN ATHLETES a ON asi.athlete_id = a.id
+            INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
+            INNER JOIN ATHLETE_SOURCE_IDS asi_r ON r.source = asi_r.source AND r.athlete_id = asi_r.source_id
+            LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
+            WHERE e.id = %s AND r.sex = %s AND asi.athlete_id = asi_r.athlete_id
+              AND s.type = 'Wave'
+            ORDER BY s.score DESC
         """
         wave_scores = db.execute_query(wave_scores_query, (event_id, sex))
         top_wave_scores = [ScoreEntry(**row) for row in wave_scores] if wave_scores else []

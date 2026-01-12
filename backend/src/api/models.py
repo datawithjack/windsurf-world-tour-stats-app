@@ -608,6 +608,42 @@ class AthleteStatsResponse(BaseModel):
 # Event Stats Models
 # ============================================================================
 
+class BreakdownScore(BaseModel):
+    """
+    Individual score in a heat breakdown (wave or jump)
+    """
+    score: float = Field(..., description="Score value")
+    move_type: str = Field(..., description="Move type (e.g., 'Wave', 'Forward Loop')")
+
+    class Config:
+        from_attributes = True
+
+
+class HeatScoreBreakdown(BaseModel):
+    """
+    Breakdown of counting scores for a best heat score
+
+    Shows the top 2 counting waves and top 2 counting jumps that contributed to the heat total.
+    """
+    waves: List[BreakdownScore] = Field(..., description="Top 2 counting wave scores")
+    jumps: List[BreakdownScore] = Field(..., description="Top 2 counting jump scores")
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "waves": [
+                    {"score": 7.5, "move_type": "Wave"},
+                    {"score": 6.8, "move_type": "Wave"}
+                ],
+                "jumps": [
+                    {"score": 6.2, "move_type": "Forward Loop"},
+                    {"score": 5.0, "move_type": "Backloop"}
+                ]
+            }
+        }
+
+
 class ScoreDetail(BaseModel):
     """
     Score detail with athlete information
@@ -618,6 +654,10 @@ class ScoreDetail(BaseModel):
     athlete_name: Optional[str] = Field(None, description="Athlete name")
     athlete_id: Optional[int] = Field(None, description="Unified athlete ID")
     heat_number: Optional[str] = Field(None, description="Heat number/identifier")
+    round_name: Optional[str] = Field(None, description="Round name (e.g., 'Winners Final', 'Semi-Finals')")
+
+    # Heat score breakdown (only for best_heat_score)
+    breakdown: Optional[HeatScoreBreakdown] = Field(None, description="Breakdown of counting scores (top 2 waves + top 2 jumps)")
 
     # Multiple best scores
     has_multiple_tied: bool = Field(False, description="True if multiple athletes are tied for this best score")
@@ -628,9 +668,14 @@ class ScoreDetail(BaseModel):
         json_schema_extra = {
             "example": {
                 "score": 24.50,
-                "athlete_name": "Degrieck",
+                "athlete_name": "Sarah-Quita Offringa",
                 "athlete_id": 456,
                 "heat_number": "21a",
+                "round_name": "Winners Final",
+                "breakdown": {
+                    "waves": [{"score": 7.5, "move_type": "Wave"}, {"score": 6.8, "move_type": "Wave"}],
+                    "jumps": [{"score": 6.2, "move_type": "Forward Loop"}, {"score": 5.0, "move_type": "Backloop"}]
+                },
                 "has_multiple_tied": False,
                 "all_tied_scores": None
             }
@@ -647,6 +692,7 @@ class JumpScoreDetail(BaseModel):
     athlete_name: Optional[str] = Field(None, description="Athlete name")
     athlete_id: Optional[int] = Field(None, description="Unified athlete ID")
     heat_number: Optional[str] = Field(None, description="Heat number/identifier")
+    round_name: Optional[str] = Field(None, description="Round name (e.g., 'Winners Final', 'Semi-Finals')")
     move_type: Optional[str] = Field(None, description="Jump move type (e.g., 'Forward Loop', 'Backloop')")
 
     # Multiple best scores
@@ -658,9 +704,10 @@ class JumpScoreDetail(BaseModel):
         json_schema_extra = {
             "example": {
                 "score": 7.10,
-                "athlete_name": "Ruano Moreno",
+                "athlete_name": "Daida Ruano Moreno",
                 "athlete_id": 789,
                 "heat_number": "19a",
+                "round_name": "Quarter-Finals",
                 "move_type": "Forward Loop",
                 "has_multiple_tied": False,
                 "all_tied_scores": None
@@ -722,16 +769,18 @@ class ScoreEntry(BaseModel):
     athlete_id: Optional[int] = Field(None, description="Unified athlete ID (for navigation to athlete profile)")
     score: Optional[float] = Field(None, description="Score value (rounded to 2 decimal places)")
     heat_number: Optional[str] = Field(None, description="Heat number/identifier")
+    round_name: Optional[str] = Field(None, description="Round name (e.g., 'Winners Final', 'Semi-Finals')")
 
     class Config:
         from_attributes = True
         json_schema_extra = {
             "example": {
                 "rank": 1,
-                "athlete_name": "Degrieck",
+                "athlete_name": "Sarah-Quita Offringa",
                 "athlete_id": 456,
                 "score": 24.50,
-                "heat_number": "21a"
+                "heat_number": "21a",
+                "round_name": "Winners Final"
             }
         }
 
