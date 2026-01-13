@@ -1,12 +1,13 @@
-import { SelectHTMLAttributes, forwardRef } from 'react';
+import { forwardRef } from 'react';
+import type { SelectHTMLAttributes } from 'react';
 
-interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
-  size?: 'default' | 'sm';
+interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
+  variant?: 'default' | 'sm';
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className = '', size = 'default', children, ...props }, ref) => {
-    const sizeClasses = {
+  ({ className = '', variant = 'default', children, ...props }, ref) => {
+    const variantClasses = {
       default: 'px-4 py-2 text-sm rounded-md focus:ring-2',
       sm: 'px-2 py-1 text-xs rounded focus:ring-1',
     };
@@ -22,7 +23,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           focus:ring-cyan-500/50
           focus:border-cyan-500/50
           transition-all
-          ${sizeClasses[size]}
+          ${variantClasses[variant]}
           ${className}
         `.replace(/\s+/g, ' ').trim()}
         {...props}
