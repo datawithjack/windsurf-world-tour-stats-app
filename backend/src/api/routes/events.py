@@ -295,7 +295,7 @@ async def get_event_stats(
                     END as heat_number,
                     hp.round_name
                 FROM PWA_IWT_HEAT_SCORES s
-                INNER JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+                INNER JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND e.source = 'PWA'
                 INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
                 INNER JOIN ATHLETES a ON asi.athlete_id = a.id
                 INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
@@ -386,7 +386,7 @@ async def get_event_stats(
                 END as heat_number,
                 hp.round_name
             FROM PWA_IWT_HEAT_RESULTS hr
-            INNER JOIN PWA_IWT_EVENTS e ON hr.source = e.source AND hr.pwa_event_id = e.event_id
+            INNER JOIN PWA_IWT_EVENTS e ON hr.pwa_event_id = e.event_id AND e.source = 'PWA'
             INNER JOIN ATHLETE_SOURCE_IDS asi_hr ON hr.source = asi_hr.source AND hr.athlete_id = asi_hr.source_id
             INNER JOIN ATHLETES a ON asi_hr.athlete_id = a.id
             INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
@@ -413,7 +413,7 @@ async def get_event_stats(
                     END as heat_number,
                     hp.round_name
                 FROM PWA_IWT_HEAT_RESULTS hr
-                INNER JOIN PWA_IWT_EVENTS e ON hr.source = e.source AND hr.pwa_event_id = e.event_id
+                INNER JOIN PWA_IWT_EVENTS e ON hr.pwa_event_id = e.event_id AND e.source = 'PWA'
                 INNER JOIN ATHLETE_SOURCE_IDS asi_hr ON hr.source = asi_hr.source AND hr.athlete_id = asi_hr.source_id
                 INNER JOIN ATHLETES a ON asi_hr.athlete_id = a.id
                 INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
@@ -431,7 +431,7 @@ async def get_event_stats(
             breakdown_heat_id_query = """
                 SELECT hr.heat_id
                 FROM PWA_IWT_HEAT_RESULTS hr
-                INNER JOIN PWA_IWT_EVENTS e ON hr.source = e.source AND hr.pwa_event_id = e.event_id
+                INNER JOIN PWA_IWT_EVENTS e ON hr.pwa_event_id = e.event_id AND e.source = 'PWA'
                 INNER JOIN ATHLETE_SOURCE_IDS asi ON hr.source = asi.source AND hr.athlete_id = asi.source_id
                 WHERE e.id = %s AND asi.athlete_id = %s
                   AND ROUND(hr.result_total, 2) = %s
@@ -503,7 +503,7 @@ async def get_event_stats(
                     hp.round_name,
                     COALESCE(st.Type_Name, s.type) as move_type
                 FROM PWA_IWT_HEAT_SCORES s
-                INNER JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+                INNER JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND e.source = 'PWA'
                 INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
                 INNER JOIN ATHLETES a ON asi.athlete_id = a.id
                 INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
@@ -543,7 +543,7 @@ async def get_event_stats(
                     END as heat_number,
                     hp.round_name
                 FROM PWA_IWT_HEAT_SCORES s
-                INNER JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+                INNER JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND e.source = 'PWA'
                 INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
                 INNER JOIN ATHLETES a ON asi.athlete_id = a.id
                 INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
@@ -580,7 +580,7 @@ async def get_event_stats(
                 END as heat_number,
                 hp.round_name
             FROM PWA_IWT_HEAT_RESULTS hr
-            INNER JOIN PWA_IWT_EVENTS e ON hr.source = e.source AND hr.pwa_event_id = e.event_id
+            INNER JOIN PWA_IWT_EVENTS e ON hr.pwa_event_id = e.event_id AND e.source = 'PWA'
             INNER JOIN ATHLETE_SOURCE_IDS asi_hr ON hr.source = asi_hr.source AND hr.athlete_id = asi_hr.source_id
             INNER JOIN ATHLETES a ON asi_hr.athlete_id = a.id
             INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
@@ -606,7 +606,7 @@ async def get_event_stats(
                 END as heat_number,
                 hp.round_name
             FROM PWA_IWT_HEAT_SCORES s
-            INNER JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+            INNER JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND e.source = 'PWA'
             INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
             INNER JOIN ATHLETES a ON asi.athlete_id = a.id
             INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
@@ -633,7 +633,7 @@ async def get_event_stats(
                 END as heat_number,
                 hp.round_name
             FROM PWA_IWT_HEAT_SCORES s
-            INNER JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+            INNER JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND e.source = 'PWA'
             INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
             INNER JOIN ATHLETES a ON asi.athlete_id = a.id
             INNER JOIN PWA_IWT_RESULTS r ON r.source = e.source AND r.event_id = e.event_id
@@ -763,7 +763,7 @@ async def list_event_athletes(
                 COUNT(DISTINCT hr.heat_id) as total_heats,
                 ROUND(COALESCE(MAX(hr.result_total), 0), 2) as best_heat_score
             FROM PWA_IWT_RESULTS r
-            JOIN PWA_IWT_EVENTS e ON r.source = e.source AND r.event_id = e.event_id
+            JOIN PWA_IWT_EVENTS e ON r.event_id = e.event_id AND e.source = 'PWA'
             JOIN ATHLETE_SOURCE_IDS asi ON r.source = asi.source AND r.athlete_id = asi.source_id
             JOIN ATHLETES a ON asi.athlete_id = a.id
             LEFT JOIN (
@@ -898,7 +898,7 @@ async def get_athlete_event_stats(
                 FROM ATHLETES a
                 JOIN ATHLETE_SOURCE_IDS asi ON a.id = asi.athlete_id
                 JOIN PWA_IWT_RESULTS r ON r.source = asi.source AND r.athlete_id = asi.source_id
-                JOIN PWA_IWT_EVENTS e ON r.source = e.source AND r.event_id = e.event_id
+                JOIN PWA_IWT_EVENTS e ON r.event_id = e.event_id AND e.source = 'PWA'
                 WHERE a.id = %s AND e.id = %s
                 LIMIT 1
             """
@@ -919,7 +919,7 @@ async def get_athlete_event_stats(
                 FROM ATHLETES a
                 JOIN ATHLETE_SOURCE_IDS asi ON a.id = asi.athlete_id
                 JOIN PWA_IWT_RESULTS r ON r.source = asi.source AND r.athlete_id = asi.source_id
-                JOIN PWA_IWT_EVENTS e ON r.source = e.source AND r.event_id = e.event_id
+                JOIN PWA_IWT_EVENTS e ON r.event_id = e.event_id AND e.source = 'PWA'
                 WHERE a.id = %s AND e.id = %s AND r.sex = %s
                 LIMIT 1
             """
@@ -942,7 +942,7 @@ async def get_athlete_event_stats(
                 hp.round_name,
                 GROUP_CONCAT(DISTINCT opp_hr.athlete_name ORDER BY opp_hr.athlete_name SEPARATOR ', ') as opponents_str
             FROM PWA_IWT_HEAT_RESULTS hr
-            JOIN PWA_IWT_EVENTS e ON hr.source = e.source AND hr.pwa_event_id = e.event_id
+            JOIN PWA_IWT_EVENTS e ON hr.pwa_event_id = e.event_id AND e.source = 'PWA'
             JOIN ATHLETE_SOURCE_IDS asi ON hr.source = asi.source AND hr.athlete_id = asi.source_id
             LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = hr.heat_id
             LEFT JOIN PWA_IWT_HEAT_RESULTS opp_hr
@@ -964,7 +964,7 @@ async def get_athlete_event_stats(
                 COALESCE(st.Type_Name, s.type) as move,
                 GROUP_CONCAT(DISTINCT opp_s.athlete_name ORDER BY opp_s.athlete_name SEPARATOR ', ') as opponents_str
             FROM PWA_IWT_HEAT_SCORES s
-            JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+            JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND e.source = 'PWA'
             JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
             LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
             LEFT JOIN SCORE_TYPES st ON st.Type = TRIM(s.type)
@@ -986,7 +986,7 @@ async def get_athlete_event_stats(
                 hp.round_name,
                 GROUP_CONCAT(DISTINCT opp_s.athlete_name ORDER BY opp_s.athlete_name SEPARATOR ', ') as opponents_str
             FROM PWA_IWT_HEAT_SCORES s
-            JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+            JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND e.source = 'PWA'
             JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
             LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
             LEFT JOIN PWA_IWT_HEAT_SCORES opp_s
@@ -1019,7 +1019,7 @@ async def get_athlete_event_stats(
                       AND COALESCE(s2.counting, FALSE) = TRUE
                 ) as fleet_average
             FROM PWA_IWT_HEAT_SCORES s
-            JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+            JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND e.source = 'PWA'
             JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
             LEFT JOIN SCORE_TYPES st ON st.Type = TRIM(s.type)
             WHERE asi.athlete_id = %s AND e.id = %s
@@ -1042,7 +1042,7 @@ async def get_athlete_event_stats(
                     ELSE NULL
                 END as elimination_type
             FROM PWA_IWT_HEAT_RESULTS hr
-            JOIN PWA_IWT_EVENTS e ON hr.source = e.source AND hr.pwa_event_id = e.event_id
+            JOIN PWA_IWT_EVENTS e ON hr.pwa_event_id = e.event_id AND e.source = 'PWA'
             JOIN ATHLETE_SOURCE_IDS asi ON hr.source = asi.source AND hr.athlete_id = asi.source_id
             LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = hr.heat_id
             WHERE asi.athlete_id = %s AND e.id = %s
@@ -1059,7 +1059,7 @@ async def get_athlete_event_stats(
                 ROUND(s.score, 2) as score,
                 COALESCE(s.counting, FALSE) as counting
             FROM PWA_IWT_HEAT_SCORES s
-            JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+            JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND e.source = 'PWA'
             JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
             LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
             LEFT JOIN SCORE_TYPES st ON st.Type = TRIM(s.type)
@@ -1076,7 +1076,7 @@ async def get_athlete_event_stats(
                 ROUND(s.score, 2) as score,
                 COALESCE(s.counting, FALSE) as counting
             FROM PWA_IWT_HEAT_SCORES s
-            JOIN PWA_IWT_EVENTS e ON s.source = e.source AND s.pwa_event_id = e.event_id
+            JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND e.source = 'PWA'
             JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
             LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
             WHERE asi.athlete_id = %s AND e.id = %s AND s.type = 'Wave'

@@ -109,10 +109,11 @@ def create_athlete_results_view(cursor):
     LEFT JOIN ATHLETES a
         ON asi.athlete_id = a.id
 
-    -- Join to event details
+    -- Join to PWA event details by event_id only
+    -- Results from both PWA and LiveHeats sources join to the same PWA event
     LEFT JOIN PWA_IWT_EVENTS e
-        ON r.source = e.source
-        AND r.event_id = e.event_id
+        ON r.event_id = e.event_id
+        AND e.source = 'PWA'
 
     WHERE r.athlete_id IS NOT NULL
       AND r.athlete_id != ''
@@ -128,6 +129,9 @@ def create_athlete_heat_results_view(cursor):
     Create a view for heat-by-heat results with athlete profiles.
 
     Joins heat results with athlete data for detailed competition analysis.
+
+    NOTE: Heat data joins to PWA events by event_id only (not source) because
+    LiveHeats heat data uses pwa_event_id which references PWA events.
     """
 
     print("\nCreating ATHLETE_HEAT_RESULTS_VIEW...")
@@ -192,10 +196,11 @@ def create_athlete_heat_results_view(cursor):
     LEFT JOIN ATHLETES a
         ON asi.athlete_id = a.id
 
-    -- Join to event details
+    -- Join to PWA event details by event_id only
+    -- LiveHeats heat data uses pwa_event_id which references the PWA event
     LEFT JOIN PWA_IWT_EVENTS e
-        ON hr.source = e.source
-        AND hr.pwa_event_id = e.event_id
+        ON hr.pwa_event_id = e.event_id
+        AND e.source = 'PWA'
 
     WHERE hr.athlete_id IS NOT NULL
       AND hr.athlete_id != ''
@@ -299,6 +304,9 @@ def create_event_stats_view(cursor):
     - Human-readable move type names (Forward Loop, Backloop, etc.)
     - Pre-joined event information
     - Simplified querying for statistics endpoint
+
+    NOTE: Heat/score data joins to PWA events by event_id only (not source) because
+    LiveHeats heat data uses pwa_event_id which references PWA events.
     """
 
     print("\nCreating EVENT_STATS_VIEW...")
@@ -306,16 +314,17 @@ def create_event_stats_view(cursor):
     # Drop view if exists
     cursor.execute("DROP VIEW IF EXISTS EVENT_STATS_VIEW")
 
-    # Create view
+    # Create view - join to PWA events by event_id only
+    # LiveHeats scores use pwa_event_id which references the PWA event
     view_sql = """
     CREATE VIEW EVENT_STATS_VIEW AS
     SELECT
-        -- Event information
+        -- Event information (from PWA source)
         e.id AS event_db_id,
         e.event_id AS pwa_event_id,
         e.event_name,
         e.year AS event_year,
-        e.source,
+        s.source AS score_source,
 
         -- Score details
         s.id AS score_id,
@@ -344,13 +353,13 @@ def create_event_stats_view(cursor):
 
     FROM PWA_IWT_HEAT_SCORES s
 
-    -- Join to event details
+    -- Join to PWA event details by event_id only
+    -- LiveHeats scores use pwa_event_id which references the PWA event
     INNER JOIN PWA_IWT_EVENTS e
         ON s.pwa_event_id = e.event_id
-        AND s.source = e.source
+        AND e.source = 'PWA'
 
     -- Join to athlete source IDs to get unified athlete ID
-    -- Simple direct join now that all PWA sources are consolidated to 'PWA'
     LEFT JOIN ATHLETE_SOURCE_IDS asi
         ON s.source = asi.source
         AND s.athlete_id = asi.source_id
@@ -381,6 +390,70 @@ def create_event_stats_view(cursor):
 
     cursor.execute(view_sql)
     print("  [OK] EVENT_STATS_VIEW created successfully")
+
+
+def create_event_info_view(cursor):
+    """
+    Create a view for event listing with athlete counts.
+
+    This view:
+    - Lists all events with metadata
+    - Counts total athletes (men/women) from results
+    - Only shows PWA source events to avoid duplicates (LiveHeats events
+      that are also in PWA would appear twice otherwise)
+
+    NOTE: Results are joined by event_id only (not source) so that
+    LiveHeats results count toward the PWA event's totals.
+    """
+
+    print("\nCreating EVENT_INFO_VIEW...")
+
+    # Drop view if exists
+    cursor.execute("DROP VIEW IF EXISTS EVENT_INFO_VIEW")
+
+    # Create view - only show PWA events to avoid duplicates
+    # Athlete counts come from all results (PWA + LiveHeats) for each event_id
+    view_sql = """
+    CREATE VIEW EVENT_INFO_VIEW AS
+    SELECT
+        e.id,
+        e.source,
+        e.year,
+        e.event_id,
+        e.event_name,
+        e.event_url,
+        e.event_date,
+        e.start_date,
+        e.end_date,
+        e.day_window,
+        e.event_section,
+        e.event_status,
+        e.competition_state,
+        e.has_wave_discipline,
+        e.all_disciplines,
+        e.country_flag,
+        e.country_code,
+        e.stars,
+        e.event_image_url,
+        r_counts.total_athletes,
+        r_counts.total_men,
+        r_counts.total_women
+    FROM PWA_IWT_EVENTS e
+    LEFT JOIN (
+        SELECT
+            event_id,
+            COUNT(DISTINCT athlete_id) AS total_athletes,
+            COUNT(DISTINCT CASE WHEN sex = 'Men' THEN athlete_id END) AS total_men,
+            COUNT(DISTINCT CASE WHEN sex = 'Women' THEN athlete_id END) AS total_women
+        FROM PWA_IWT_RESULTS
+        GROUP BY event_id
+    ) r_counts ON e.event_id = r_counts.event_id
+    WHERE e.source = 'PWA'
+    """
+
+    cursor.execute(view_sql)
+    print("  [OK] EVENT_INFO_VIEW created successfully")
+
 
 def verify_views(cursor):
     """Verify views were created and show sample data"""
@@ -439,6 +512,22 @@ def verify_views(cursor):
     for row in cursor.fetchall():
         print(f"  {row[0][:30]} - {row[1]}: best {row[2]}, {row[3]} scores")
 
+    # Check EVENT_INFO_VIEW
+    cursor.execute("SELECT COUNT(*) FROM EVENT_INFO_VIEW")
+    count = cursor.fetchone()[0]
+    print(f"\nEVENT_INFO_VIEW: {count} events")
+
+    cursor.execute("""
+        SELECT event_name, year, total_athletes, total_men, total_women
+        FROM EVENT_INFO_VIEW
+        WHERE has_wave_discipline = TRUE
+        ORDER BY year DESC, event_name
+        LIMIT 5
+    """)
+    print("\nRecent wave events:")
+    for row in cursor.fetchall():
+        print(f"  {row[0][:40]} ({row[1]}) - {row[2]} athletes ({row[3]}M/{row[4]}W)")
+
 def main():
     """Main execution function"""
     print("Creating Database Views")
@@ -456,6 +545,7 @@ def main():
         create_athlete_heat_results_view(cursor)
         create_athlete_summary_view(cursor)
         create_event_stats_view(cursor)
+        create_event_info_view(cursor)
 
         # Commit changes
         conn.commit()
@@ -473,6 +563,7 @@ def main():
         print("2. ATHLETE_HEAT_RESULTS_VIEW - Heat-by-heat results with athlete profiles")
         print("3. ATHLETE_SUMMARY_VIEW - Career statistics for each athlete")
         print("4. EVENT_STATS_VIEW - Event statistics with score types and move names")
+        print("5. EVENT_INFO_VIEW - Event listing with athlete counts (PWA events only)")
 
     except mysql.connector.Error as err:
         print(f"\n[ERROR] DATABASE ERROR: {err}")
