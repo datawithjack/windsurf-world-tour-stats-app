@@ -45,20 +45,25 @@ interface FlipCardProps {
   type: 'heat' | 'jump' | 'wave';
 }
 
-// Helper to format subtitle: "Full Name - Round (Heat No)"
+// Helper to format subtitle: "Full Name - Round (Heat No)" or "Tied - Round" when multiple tied
 const formatSubtitle = (scoreData: BestScore, type: 'heat' | 'jump' | 'wave') => {
-  const parts: string[] = [scoreData.athlete_name];
+  // If multiple tied scores, show "Tied" instead of athlete name
+  const displayName = scoreData.has_multiple_tied ? 'Tied' : scoreData.athlete_name;
+  const parts: string[] = [displayName];
 
   if (scoreData.round_name) {
     parts.push(scoreData.round_name);
   }
 
-  parts.push(`(Heat ${scoreData.heat_number})`);
+  // Only show heat number if not tied (not relevant when multiple athletes)
+  if (!scoreData.has_multiple_tied) {
+    parts.push(`(Heat ${scoreData.heat_number})`);
+  }
 
   return (
     <>
       {parts.join(' - ')}
-      {type === 'jump' && scoreData.move_type && (
+      {type === 'jump' && scoreData.move_type && !scoreData.has_multiple_tied && (
         <span className="block mt-1">{scoreData.move_type}</span>
       )}
     </>
@@ -91,20 +96,26 @@ const FlipCard = ({ title, scoreData, type }: FlipCardProps) => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative h-full">
       <div
-        className="w-full bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6 transition-all duration-300 hover:bg-slate-800/60 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10"
-        style={{ minHeight: '180px' }}
+        className="w-full h-full bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6 transition-all duration-300 hover:bg-slate-800/60 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10 flex flex-col"
+        style={{ minHeight: '200px' }}
       >
-        <h3 className="text-base font-medium text-white mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
-          {title}
-        </h3>
-        <p className="text-4xl font-bold text-white mb-2">{scoreData.score != null ? scoreData.score.toFixed(2) : '0.00'} pts</p>
-        <p className="text-xs text-gray-400">
-          {formatSubtitle(scoreData, type)}
-        </p>
+        {/* Fixed height header area */}
+        <div className="flex-none">
+          <h3 className="text-base font-medium text-white mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
+            {title}
+          </h3>
+          <p className="text-4xl font-bold text-white mb-2">{scoreData.score != null ? scoreData.score.toFixed(2) : '0.00'} pts</p>
+          <p className="text-xs text-gray-400 min-h-[2.5rem]">
+            {formatSubtitle(scoreData, type)}
+          </p>
+        </div>
 
-        {/* Expandable section */}
+        {/* Spacer to push expand button to bottom */}
+        <div className="flex-1" />
+
+        {/* Expandable section - always at bottom */}
         {canExpand && (
           <div className="mt-4">
             <button
@@ -193,7 +204,7 @@ const StatsSummaryCards = ({
   bestWaveScore,
 }: StatsSummaryCardsProps) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
         {/* Best Heat Score */}
         {bestHeatScore && (
           <FlipCard

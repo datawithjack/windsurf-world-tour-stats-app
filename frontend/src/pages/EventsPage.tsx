@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
-import { Calendar, MapPin, Star, User } from 'lucide-react';
+import { Calendar, MapPin, Star, User, LayoutGrid, List } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useState, useMemo } from 'react';
@@ -9,6 +9,7 @@ const EventsPage = () => {
   const [yearFilter, setYearFilter] = useState<string>('all');
   const [eventTypeFilter, setEventTypeFilter] = useState<string>('wave');
   const [statusFilter, setStatusFilter] = useState<string>('completed');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const { data: eventsData, isLoading, error } = useQuery({
     queryKey: ['events', eventTypeFilter],
@@ -129,6 +130,32 @@ const EventsPage = () => {
                 <option value="wave">Wave</option>
                 <option value="non-wave">Non-Wave</option>
               </select>
+
+              {/* View Toggle */}
+              <div className="flex items-center gap-1 bg-slate-800/60 border border-slate-700/50 rounded-md p-1">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  aria-label="Grid view"
+                  className={`p-2 rounded transition-colors ${
+                    viewMode === 'grid'
+                      ? 'bg-cyan-500/20 text-cyan-400'
+                      : 'text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  <LayoutGrid size={18} />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  aria-label="List view"
+                  className={`p-2 rounded transition-colors ${
+                    viewMode === 'list'
+                      ? 'bg-cyan-500/20 text-cyan-400'
+                      : 'text-gray-400 hover:text-gray-300'
+                  }`}
+                >
+                  <List size={18} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -174,79 +201,152 @@ const EventsPage = () => {
                       <div className="h-1 w-20 bg-cyan-500 rounded"></div>
                     </div>
 
-                    {/* Events Grid for this year */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {yearEvents.map((event, index) => (
-                        <Link key={event.id} to={`/events/${event.id}`}>
-                          <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: index * 0.05 }}
-                            className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden hover:bg-slate-800/60 transition-all duration-300 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10 cursor-pointer h-full flex flex-col"
-                          >
-                            {event.event_image_url && (
-                              <div className="relative">
-                                <img
-                                  src={event.event_image_url}
-                                  alt={event.event_name}
-                                  className="w-full h-48 object-cover"
-                                />
-                                {/* Status Badge - Top Left */}
-                                <div className="absolute top-3 left-3">
+                    {viewMode === 'grid' ? (
+                      /* Grid View */
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {yearEvents.map((event, index) => (
+                          <Link key={event.id} to={`/events/${event.id}`}>
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.5, delay: index * 0.05 }}
+                              className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden hover:bg-slate-800/60 transition-all duration-300 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10 cursor-pointer h-full flex flex-col"
+                            >
+                              {event.event_image_url && (
+                                <div className="relative">
+                                  <img
+                                    src={event.event_image_url}
+                                    alt={event.event_name}
+                                    className="w-full h-48 object-cover"
+                                  />
+                                  {/* Status Badge - Top Left */}
+                                  <div className="absolute top-3 left-3">
+                                    <span
+                                      className={`bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-xs font-semibold uppercase whitespace-nowrap ${getStatusBadge(
+                                        event.event_section
+                                      )}`}
+                                    >
+                                      {event.event_section.replace(' events', '')}
+                                    </span>
+                                  </div>
+                                  {/* Stars Badge - Top Right */}
+                                  {event.stars && (
+                                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded">
+                                      <Star className="text-yellow-400 fill-yellow-400" size={14} />
+                                      <span className="text-xs text-white font-semibold">{event.stars}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              <div className="p-6 flex-1 flex flex-col">
+                                <div className="mb-3">
+                                  <h3 className="text-sm md:text-base font-extrabold text-white line-clamp-2 leading-tight" style={{ fontFamily: 'var(--font-inter)' }} title={event.event_name}>
+                                    {event.event_name}
+                                  </h3>
+                                </div>
+                                <div className="space-y-2 text-gray-300 mt-auto">
+                                  <div className="flex items-center gap-2">
+                                    <MapPin className="text-cyan-400 flex-shrink-0" size={16} />
+                                    <span className="text-sm">{event.country_flag}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="text-cyan-400 flex-shrink-0" size={16} />
+                                    <span className="text-sm">{event.event_date}</span>
+                                  </div>
+                                  {(event.total_men || event.total_women) && (
+                                    <div className="flex items-center gap-3">
+                                      {event.total_men !== null && event.total_men > 0 && (
+                                        <div className="flex items-center gap-1">
+                                          <User className="text-blue-400 flex-shrink-0" size={16} />
+                                          <span className="text-sm font-semibold">{event.total_men}</span>
+                                        </div>
+                                      )}
+                                      {event.total_women !== null && event.total_women > 0 && (
+                                        <div className="flex items-center gap-1">
+                                          <User className="text-pink-400 flex-shrink-0" size={16} />
+                                          <span className="text-sm font-semibold">{event.total_women}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </motion.div>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      /* List View */
+                      <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-slate-700/50">
+                              <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                              <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Event</th>
+                              <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider hidden md:table-cell">Date</th>
+                              <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Location</th>
+                              <th className="text-center py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider hidden sm:table-cell">Athletes</th>
+                              <th className="text-center py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Stars</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {yearEvents.map((event, index) => (
+                              <motion.tr
+                                key={event.id}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.3, delay: index * 0.02 }}
+                                className="border-b border-slate-700/30 last:border-b-0 hover:bg-slate-700/30 transition-colors cursor-pointer"
+                                onClick={() => window.location.href = `/events/${event.id}`}
+                              >
+                                <td className="py-3 px-4">
                                   <span
-                                    className={`bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-xs font-semibold uppercase whitespace-nowrap ${getStatusBadge(
+                                    className={`px-2 py-1 rounded text-xs font-semibold uppercase whitespace-nowrap ${getStatusBadge(
                                       event.event_section
                                     )}`}
                                   >
                                     {event.event_section.replace(' events', '')}
                                   </span>
-                                </div>
-                                {/* Stars Badge - Top Right */}
-                                {event.stars && (
-                                  <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded">
-                                    <Star className="text-yellow-400 fill-yellow-400" size={14} />
-                                    <span className="text-xs text-white font-semibold">{event.stars}</span>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            <div className="p-6 flex-1 flex flex-col">
-                              <div className="mb-3">
-                                <h3 className="text-sm md:text-base font-extrabold text-white line-clamp-2 leading-tight" style={{ fontFamily: 'var(--font-inter)' }} title={event.event_name}>
-                                  {event.event_name}
-                                </h3>
-                              </div>
-                              <div className="space-y-2 text-gray-300 mt-auto">
-                                <div className="flex items-center gap-2">
-                                  <MapPin className="text-cyan-400 flex-shrink-0" size={16} />
-                                  <span className="text-sm">{event.country_flag}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="text-cyan-400 flex-shrink-0" size={16} />
-                                  <span className="text-sm">{event.event_date}</span>
-                                </div>
-                                {(event.total_men || event.total_women) && (
-                                  <div className="flex items-center gap-3">
+                                </td>
+                                <td className="py-3 px-4">
+                                  <Link
+                                    to={`/events/${event.id}`}
+                                    className="text-white font-medium hover:text-cyan-400 transition-colors"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {event.event_name}
+                                  </Link>
+                                </td>
+                                <td className="py-3 px-4 text-gray-300 text-sm hidden md:table-cell">
+                                  {event.event_date}
+                                </td>
+                                <td className="py-3 px-4 text-gray-300 text-sm hidden lg:table-cell">
+                                  {event.country_flag}
+                                </td>
+                                <td className="py-3 px-4 text-center hidden sm:table-cell">
+                                  <div className="flex items-center justify-center gap-2">
                                     {event.total_men !== null && event.total_men > 0 && (
-                                      <div className="flex items-center gap-1">
-                                        <User className="text-blue-400 flex-shrink-0" size={16} />
-                                        <span className="text-sm font-semibold">{event.total_men}</span>
-                                      </div>
+                                      <span className="text-blue-400 text-sm font-semibold">{event.total_men}M</span>
                                     )}
                                     {event.total_women !== null && event.total_women > 0 && (
-                                      <div className="flex items-center gap-1">
-                                        <User className="text-pink-400 flex-shrink-0" size={16} />
-                                        <span className="text-sm font-semibold">{event.total_women}</span>
-                                      </div>
+                                      <span className="text-pink-400 text-sm font-semibold">{event.total_women}W</span>
                                     )}
                                   </div>
-                                )}
-                              </div>
-                            </div>
-                          </motion.div>
-                        </Link>
-                      ))}
-                    </div>
+                                </td>
+                                <td className="py-3 px-4 text-center">
+                                  {event.stars && (
+                                    <div className="flex items-center justify-center gap-1">
+                                      <Star className="text-yellow-400 fill-yellow-400" size={14} />
+                                      <span className="text-white text-sm font-semibold">{event.stars}</span>
+                                    </div>
+                                  )}
+                                </td>
+                              </motion.tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 ))}
             </div>

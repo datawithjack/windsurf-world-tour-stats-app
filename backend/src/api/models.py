@@ -759,6 +759,37 @@ class MoveTypeStat(BaseModel):
         }
 
 
+class RoundStat(BaseModel):
+    """
+    Round statistics with best and average scores
+
+    Aggregated statistics for a specific round (e.g., Final, Semi-Finals).
+    """
+    round_name: str = Field(..., description="Round name (e.g., 'Final', 'Semi-Finals', 'Round 5')")
+    best_heat_score: Optional[float] = Field(None, description="Best heat score in this round")
+    average_heat_score: Optional[float] = Field(None, description="Average heat score in this round")
+    best_jump_score: Optional[float] = Field(None, description="Best jump score in this round")
+    average_jump_score: Optional[float] = Field(None, description="Average jump score in this round")
+    best_wave_score: Optional[float] = Field(None, description="Best wave score in this round")
+    average_wave_score: Optional[float] = Field(None, description="Average wave score in this round")
+    total_heats: int = Field(..., description="Number of heats in this round")
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "round_name": "Semi-Finals",
+                "best_heat_score": 24.50,
+                "average_heat_score": 18.75,
+                "best_jump_score": 7.10,
+                "average_jump_score": 4.25,
+                "best_wave_score": 8.00,
+                "average_wave_score": 5.50,
+                "total_heats": 4
+            }
+        }
+
+
 class ScoreEntry(BaseModel):
     """
     Score table entry
@@ -855,6 +886,7 @@ class EventStatsResponse(BaseModel):
     sex: str = Field(..., description="Gender division filter applied")
     summary_stats: SummaryStats = Field(..., description="Summary statistics (best scores)")
     move_type_stats: List[MoveTypeStat] = Field(..., description="Move type statistics (sorted by best_score DESC)")
+    round_stats: List[RoundStat] = Field(default=[], description="Round statistics (best/average scores per round)")
     top_heat_scores: List[ScoreEntry] = Field(..., description="Top 10 heat scores (sorted DESC)")
     top_jump_scores: List[JumpScoreEntry] = Field(..., description="Top 10 jump scores (sorted DESC)")
     top_wave_scores: List[ScoreEntry] = Field(..., description="Top 10 wave scores (sorted DESC)")

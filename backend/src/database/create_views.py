@@ -61,7 +61,7 @@ def create_athlete_results_view(cursor):
         a.year_of_birth,
 
         -- Profile pictures (PWA preferred, fallback to LiveHeats)
-        COALESCE(a.pwa_profile_url, a.liveheats_image_url) AS profile_picture_url,
+        COALESCE(a.liveheats_image_url, a.pwa_profile_url) AS profile_picture_url,
         a.pwa_profile_url AS pwa_picture_url,
         a.liveheats_image_url AS liveheats_picture_url,
 
@@ -152,7 +152,7 @@ def create_athlete_heat_results_view(cursor):
         a.primary_name AS athlete_name,
         a.nationality,
         a.year_of_birth,
-        COALESCE(a.pwa_profile_url, a.liveheats_image_url) AS profile_picture_url,
+        COALESCE(a.liveheats_image_url, a.pwa_profile_url) AS profile_picture_url,
 
         -- Event information
         e.id AS event_db_id,
@@ -236,7 +236,7 @@ def create_athlete_summary_view(cursor):
         a.primary_name AS athlete_name,
         a.nationality,
         a.year_of_birth,
-        COALESCE(a.pwa_profile_url, a.liveheats_image_url) AS profile_picture_url,
+        COALESCE(a.liveheats_image_url, a.pwa_profile_url) AS profile_picture_url,
         a.pwa_sail_number,
 
         -- Career statistics

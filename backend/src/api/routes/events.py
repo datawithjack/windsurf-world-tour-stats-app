@@ -14,6 +14,7 @@ from ..models import (
     Event, EventsResponse, PaginationMeta,
     EventStatsResponse, SummaryStats, ScoreDetail, JumpScoreDetail,
     MoveTypeStat, BestScoredBy, ScoreEntry, JumpScoreEntry, EventStatsMetadata,
+    RoundStat,
     AthleteListResponse, AthleteListItem, AthleteListMetadata,
     AthleteStatsResponse, AthleteProfile, AthleteSummaryStats,
     BestHeatScore, BestJumpScore, BestWaveScore,
@@ -646,6 +647,33 @@ async def get_event_stats(
         wave_scores = db.execute_query(wave_scores_query, (event_id, sex))
         top_wave_scores = [ScoreEntry(**row) for row in wave_scores] if wave_scores else []
 
+        # 6b. Get round statistics (best/average scores per round)
+        round_stats_query = """
+            SELECT
+                hp.round_name,
+                ROUND(MAX(hr.result_total), 2) as best_heat_score,
+                ROUND(AVG(hr.result_total), 2) as average_heat_score,
+                ROUND(MAX(CASE WHEN s.type != 'Wave' THEN s.score END), 2) as best_jump_score,
+                ROUND(AVG(CASE WHEN s.type != 'Wave' THEN s.score END), 2) as average_jump_score,
+                ROUND(MAX(CASE WHEN s.type = 'Wave' THEN s.score END), 2) as best_wave_score,
+                ROUND(AVG(CASE WHEN s.type = 'Wave' THEN s.score END), 2) as average_wave_score,
+                COUNT(DISTINCT hr.heat_id) as total_heats
+            FROM PWA_IWT_HEAT_RESULTS hr
+            INNER JOIN PWA_IWT_EVENTS e ON hr.pwa_event_id = e.event_id AND e.source = hr.source
+            INNER JOIN ATHLETE_SOURCE_IDS asi_hr ON hr.source = asi_hr.source AND hr.athlete_id = asi_hr.source_id
+            INNER JOIN PWA_IWT_RESULTS r ON r.event_id = e.event_id AND r.source = e.source
+            INNER JOIN ATHLETE_SOURCE_IDS asi_r ON r.source = asi_r.source AND r.athlete_id = asi_r.source_id
+            LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = hr.heat_id
+            LEFT JOIN PWA_IWT_HEAT_SCORES s ON s.heat_id = hr.heat_id
+                AND s.source = hr.source AND s.athlete_id = hr.athlete_id
+            WHERE e.id = %s AND r.sex = %s AND asi_hr.athlete_id = asi_r.athlete_id
+                AND hp.round_name IS NOT NULL
+            GROUP BY hp.round_name
+            ORDER BY MIN(hp.round_order) ASC
+        """
+        round_stats_results = db.execute_query(round_stats_query, (event_id, sex))
+        round_stats = [RoundStat(**row) for row in round_stats_results] if round_stats_results else []
+
         # 7. Get metadata
         metadata_query = """
             SELECT
@@ -676,6 +704,7 @@ async def get_event_stats(
             sex=sex,
             summary_stats=summary_stats,
             move_type_stats=move_type_stats,
+            round_stats=round_stats,
             top_heat_scores=top_heat_scores,
             top_jump_scores=top_jump_scores,
             top_wave_scores=top_wave_scores,

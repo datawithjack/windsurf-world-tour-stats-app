@@ -151,6 +151,17 @@ export interface MoveTypeStat {
   };
 }
 
+export interface RoundStat {
+  round_name: string;
+  best_heat_score: number | null;
+  average_heat_score: number | null;
+  best_jump_score: number | null;
+  average_jump_score: number | null;
+  best_wave_score: number | null;
+  average_wave_score: number | null;
+  total_heats: number;
+}
+
 export interface TopScore {
   rank: number;
   athlete_name: string;
@@ -171,6 +182,7 @@ export interface EventStatsResponse {
     best_wave_score: BestScoreDetail | null;
   };
   move_type_stats: MoveTypeStat[];
+  round_stats: RoundStat[];
   top_heat_scores: TopScore[];
   top_jump_scores: TopScore[];
   top_wave_scores: TopScore[];
