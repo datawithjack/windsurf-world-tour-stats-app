@@ -137,24 +137,29 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
   const [roundFilter, setRoundFilter] = useState<string>('');
   const [heatFilter, setHeatFilter] = useState<string>('');
 
-  // Extract unique rounds and heats from all tables
+  // Extract unique rounds and heats from all tables (only include heats that have actual data)
   const { uniqueRounds, uniqueHeats } = useMemo(() => {
     if (!statsData) return { uniqueRounds: [], uniqueHeats: [] };
 
     const rounds = new Set<string>();
-    const heats = new Set<string>();
+    const heatDataCount = new Map<string, number>();
 
-    // Collect from all score tables
+    // Collect from all score tables - track which heats have data
     [...(statsData.top_heat_scores || []),
      ...(statsData.top_jump_scores || []),
      ...(statsData.top_wave_scores || [])].forEach((score) => {
       if (score.round_name) rounds.add(score.round_name);
-      if (score.heat_number) heats.add(score.heat_number);
+      if (score.heat_number) {
+        heatDataCount.set(score.heat_number, (heatDataCount.get(score.heat_number) || 0) + 1);
+      }
     });
+
+    // Only include heats that have at least one data point
+    const heatsWithData = Array.from(heatDataCount.keys());
 
     return {
       uniqueRounds: Array.from(rounds).sort(),
-      uniqueHeats: Array.from(heats).sort((a, b) => {
+      uniqueHeats: heatsWithData.sort((a, b) => {
         // Sort heats numerically if possible
         const numA = parseInt(a.replace(/\D/g, ''));
         const numB = parseInt(b.replace(/\D/g, ''));
@@ -201,36 +206,134 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
   const filteredJumpScores = filterScores(data.topJumpScores);
   const filteredWaveScores = filterScores(data.topWaveScores);
 
+  // Calculate filtered summary stats when filters are applied
+  const filteredSummaryStats = useMemo(() => {
+    const hasFilters = roundFilter || heatFilter;
+
+    if (!hasFilters) {
+      // No filters - use original API data
+      return data.summaryCards;
+    }
+
+    // Filters applied - calculate best from filtered data
+    const bestHeat = filteredHeatScores.length > 0
+      ? filteredHeatScores.reduce((best, curr) => curr.score > best.score ? curr : best)
+      : null;
+
+    const bestJump = filteredJumpScores.length > 0
+      ? filteredJumpScores.reduce((best, curr) => curr.score > best.score ? curr : best)
+      : null;
+
+    const bestWave = filteredWaveScores.length > 0
+      ? filteredWaveScores.reduce((best, curr) => curr.score > best.score ? curr : best)
+      : null;
+
+    return {
+      bestHeatScore: bestHeat ? {
+        score: bestHeat.score,
+        athlete_name: bestHeat.athlete,
+        athlete_id: String(bestHeat.athleteId),
+        heat_number: bestHeat.heatNo,
+        round_name: bestHeat.round,
+        has_multiple_tied: false,
+        all_tied_scores: null,
+        breakdown: null,
+      } : null,
+      bestJumpScore: bestJump ? {
+        score: bestJump.score,
+        athlete_name: bestJump.athlete,
+        athlete_id: String(bestJump.athleteId),
+        heat_number: bestJump.heatNo,
+        round_name: bestJump.round,
+        has_multiple_tied: false,
+        all_tied_scores: null,
+        move_type: (bestJump as typeof filteredJumpScores[0]).move,
+      } : null,
+      bestWaveScore: bestWave ? {
+        score: bestWave.score,
+        athlete_name: bestWave.athlete,
+        athlete_id: String(bestWave.athleteId),
+        heat_number: bestWave.heatNo,
+        round_name: bestWave.round,
+        has_multiple_tied: false,
+        all_tied_scores: null,
+      } : null,
+    };
+  }, [data.summaryCards, filteredHeatScores, filteredJumpScores, filteredWaveScores, roundFilter, heatFilter]);
+
+  // Calculate filtered chart data when filters are applied
+  const filteredChartData = useMemo(() => {
+    const hasFilters = roundFilter || heatFilter;
+
+    if (!hasFilters) {
+      // No filters - use original API data
+      return data.chartData;
+    }
+
+    // Group jump scores by move type and calculate best/average
+    const moveTypeStats = new Map<string, { scores: number[]; bestBy: { athlete: string; heat: string; round: string; score: number } | null }>();
+
+    // Add wave scores
+    if (filteredWaveScores.length > 0) {
+      const waveScores = filteredWaveScores.map(s => s.score);
+      const bestWave = filteredWaveScores.reduce((best, curr) => curr.score > best.score ? curr : best);
+      moveTypeStats.set('Wave', {
+        scores: waveScores,
+        bestBy: { athlete: bestWave.athlete, heat: bestWave.heatNo, round: bestWave.round, score: bestWave.score }
+      });
+    }
+
+    // Add jump scores grouped by move type
+    filteredJumpScores.forEach(jump => {
+      const moveType = jump.move || 'Unknown';
+      if (!moveTypeStats.has(moveType)) {
+        moveTypeStats.set(moveType, { scores: [], bestBy: null });
+      }
+      const stat = moveTypeStats.get(moveType)!;
+      stat.scores.push(jump.score);
+      if (!stat.bestBy || jump.score > stat.bestBy.score) {
+        stat.bestBy = { athlete: jump.athlete, heat: jump.heatNo, round: jump.round, score: jump.score };
+      }
+    });
+
+    // Convert to chart data format
+    return Array.from(moveTypeStats.entries()).map(([type, stat]) => ({
+      type,
+      best: Math.max(...stat.scores),
+      average: stat.scores.reduce((a, b) => a + b, 0) / stat.scores.length,
+      fleetAverage: stat.scores.reduce((a, b) => a + b, 0) / stat.scores.length,
+      bestBy: stat.bestBy,
+    })).sort((a, b) => b.best - a.best);
+  }, [data.chartData, filteredWaveScores, filteredJumpScores, roundFilter, heatFilter]);
+
   return (
     <div className="space-y-8">
-      {/* Summary Cards */}
-      {(data.summaryCards.bestHeatScore || data.summaryCards.bestJumpScore || data.summaryCards.bestWaveScore) && (
-        <StatsSummaryCards
-          bestHeatScore={data.summaryCards.bestHeatScore}
-          bestJumpScore={data.summaryCards.bestJumpScore}
-          bestWaveScore={data.summaryCards.bestWaveScore}
-        />
-      )}
-
-      {/* Filters */}
+      {/* Inline Filters - matching gender filter style */}
       {(uniqueRounds.length > 0 || uniqueHeats.length > 0) && (
-        <div className="flex flex-wrap items-center gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/30">
-          <span className="text-sm font-medium text-gray-300">Filter Tables:</span>
+        <div className="flex flex-wrap items-center gap-3">
           {uniqueRounds.length > 0 && (
-            <FilterDropdown
-              label="Round"
+            <select
               value={roundFilter}
-              options={uniqueRounds}
-              onChange={setRoundFilter}
-            />
+              onChange={(e) => setRoundFilter(e.target.value)}
+              className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm"
+            >
+              <option value="">All Rounds</option>
+              {uniqueRounds.map((round) => (
+                <option key={round} value={round}>{round}</option>
+              ))}
+            </select>
           )}
           {uniqueHeats.length > 0 && (
-            <FilterDropdown
-              label="Heat"
+            <select
               value={heatFilter}
-              options={uniqueHeats}
-              onChange={setHeatFilter}
-            />
+              onChange={(e) => setHeatFilter(e.target.value)}
+              className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm"
+            >
+              <option value="">All Heats</option>
+              {uniqueHeats.map((heat) => (
+                <option key={heat} value={heat}>Heat {heat}</option>
+              ))}
+            </select>
           )}
           {(roundFilter || heatFilter) && (
             <button
@@ -238,19 +341,28 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
                 setRoundFilter('');
                 setHeatFilter('');
               }}
-              className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+              className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors px-2"
             >
-              Clear filters
+              Clear
             </button>
           )}
         </div>
       )}
 
+      {/* Summary Cards - responsive to filters */}
+      {(filteredSummaryStats.bestHeatScore || filteredSummaryStats.bestJumpScore || filteredSummaryStats.bestWaveScore) && (
+        <StatsSummaryCards
+          bestHeatScore={filteredSummaryStats.bestHeatScore}
+          bestJumpScore={filteredSummaryStats.bestJumpScore}
+          bestWaveScore={filteredSummaryStats.bestWaveScore}
+        />
+      )}
+
       {/* Bar Chart and Top Heat Scores */}
-      {data.chartData.length > 0 && (
+      {filteredChartData.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <FeatureCard title="Best and Average Counting Score by Type" isLoading={false}>
-            <EventStatsChart data={data.chartData} />
+            <EventStatsChart data={filteredChartData} />
           </FeatureCard>
 
           <FeatureCard
