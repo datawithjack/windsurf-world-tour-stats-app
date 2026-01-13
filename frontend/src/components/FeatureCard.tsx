@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 interface FeatureCardProps {
   title: string;
@@ -9,11 +9,13 @@ interface FeatureCardProps {
 }
 
 const FeatureCard = ({ title, children, isLoading = false, headerAction }: FeatureCardProps) => {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5 }}
       className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6"
     >
       <div className="flex items-center justify-between mb-4">

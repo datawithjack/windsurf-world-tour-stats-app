@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface BreakdownScore {
@@ -72,6 +72,7 @@ const formatSubtitle = (scoreData: BestScore, type: 'heat' | 'jump' | 'wave') =>
 
 const FlipCard = ({ title, scoreData, type }: FlipCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   // Determine what can be expanded
   const hasBreakdown = type === 'heat' && scoreData.breakdown &&
@@ -129,10 +130,10 @@ const FlipCard = ({ title, scoreData, type }: FlipCardProps) => {
             <AnimatePresence>
               {isExpanded && (
                 <motion.div
-                  initial={{ height: 0, opacity: 0 }}
+                  initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
+                  exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                  transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.3 }}
                   className="overflow-hidden"
                 >
                   <div className="mt-3 space-y-3">

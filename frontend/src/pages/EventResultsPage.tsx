@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Star, User, Loader2 } from 'lucide-react';
+import { ArrowLeft, Star, User, Loader2, Info, X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
@@ -10,6 +10,7 @@ import AthleteStatsTab from '../components/AthleteStatsTab';
 import HeadToHeadComparison from '../components/HeadToHeadComparison';
 import Select from '../components/ui/Select';
 import SearchableSelect from '../components/ui/SearchableSelect';
+import EmptyState from '../components/ui/EmptyState';
 
 const EventResultsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,12 +18,13 @@ const EventResultsPage = () => {
   const [genderFilter, setGenderFilter] = useState<'all' | 'men' | 'women'>('women');
   const [selectedAthleteId, setSelectedAthleteId] = useState<number | null>(null);
   const [defaultSet, setDefaultSet] = useState(false);
+  const [genderSwitchNotice, setGenderSwitchNotice] = useState(false);
 
   // Refs for tab navigation scrolling
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const tabContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const { data: event, isLoading, error } = useQuery({
+  const { data: event, isLoading, error, refetch } = useQuery({
     queryKey: ['event', id],
     queryFn: () => apiService.getEvent(Number(id)),
     enabled: !!id,
@@ -68,12 +70,21 @@ const EventResultsPage = () => {
     if (!defaultSet && resultsData?.results !== undefined && event?.event_id) {
       // If no results for women, check if men's results exist
       if (resultsData.results.length === 0 && genderFilter === 'women') {
-        // Try to fetch men's results to see if we should switch default
+        // Show notice and switch to men's results
+        setGenderSwitchNotice(true);
         setGenderFilter('men');
       }
       setDefaultSet(true);
     }
   }, [resultsData, event?.event_id, defaultSet, genderFilter]);
+
+  // Auto-dismiss the gender switch notice after 5 seconds
+  useEffect(() => {
+    if (genderSwitchNotice) {
+      const timer = setTimeout(() => setGenderSwitchNotice(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [genderSwitchNotice]);
 
   // Reset selected athlete when gender filter changes (but not when navigating to athlete-stats)
   useEffect(() => {
@@ -122,6 +133,29 @@ const EventResultsPage = () => {
         </div>
       </section>
 
+      {/* Gender Switch Notice */}
+      {genderSwitchNotice && (
+        <section className="px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Info className="text-blue-400 flex-shrink-0" size={18} />
+                <p className="text-sm text-gray-300">
+                  No women's results available for this event. Showing men's results instead.
+                </p>
+              </div>
+              <button
+                onClick={() => setGenderSwitchNotice(false)}
+                className="text-gray-400 hover:text-gray-300 transition-colors"
+                aria-label="Dismiss notice"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Page Header */}
       <section className="px-4 sm:px-6 lg:px-8 pt-6 pb-4">
         <div className="max-w-7xl mx-auto">
@@ -131,9 +165,13 @@ const EventResultsPage = () => {
               <div className="h-4 bg-slate-700 rounded w-1/2"></div>
             </div>
           ) : error ? (
-            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-6">
-              <h3 className="text-xl font-semibold text-red-400 mb-2">Error Loading Event</h3>
-              <p className="text-gray-300">Unable to fetch event details. Please try again.</p>
+            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6">
+              <EmptyState
+                variant="error"
+                title="Failed to Load Event"
+                description="Unable to fetch event details from the server."
+                onRetry={() => refetch()}
+              />
             </div>
           ) : event ? (
             <div>

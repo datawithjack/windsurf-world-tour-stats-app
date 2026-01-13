@@ -70,6 +70,8 @@ const StatCounter = ({ end, duration = 2000, suffix = '', delay = 0 }: StatCount
         isComplete ? 'opacity-100' : 'opacity-70'
       }`}
       style={{ fontFamily: 'var(--font-bebas)' }}
+      aria-live={isComplete ? 'polite' : 'off'}
+      aria-atomic="true"
     >
       {formatNumber(count)}{suffix}
     </span>

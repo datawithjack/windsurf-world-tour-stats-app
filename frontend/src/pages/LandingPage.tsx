@@ -3,10 +3,11 @@ import { ArrowRight, Info } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import StatCounter from '../components/StatCounter';
 import { apiService } from '../services/api';
+import EmptyState from '../components/ui/EmptyState';
 
 const LandingPage = () => {
   // Fetch global stats from API
-  const { data: statsData, isLoading, isError } = useQuery({
+  const { data: statsData, isLoading, isError, refetch } = useQuery({
     queryKey: ['globalStats'],
     queryFn: () => apiService.getGlobalStats(),
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -39,12 +40,6 @@ const LandingPage = () => {
                 Browse Events
                 <ArrowRight size={18} />
               </Link>
-              <button
-                disabled
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-cyan-500/50 text-cyan-400/70 font-semibold rounded-md cursor-not-allowed"
-              >
-                Coming Soon: Athletes
-              </button>
             </div>
           </div>
         </div>
@@ -65,49 +60,60 @@ const LandingPage = () => {
       {/* Statistics Section */}
       <section className="px-4 sm:px-6 lg:px-8 pb-20">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
-            {/* Events Stat */}
-            <div className="text-center">
-              <div className="mb-2">
-                {isLoading || isError ? (
-                  <div className="text-6xl font-bold text-gray-500">-</div>
-                ) : (
-                  <StatCounter end={parseInt(totalEvents)} duration={1500} delay={0} />
-                )}
-              </div>
-              <p className="text-sm text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>
-                Events (since 2016)
-              </p>
+          {isError ? (
+            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-8">
+              <EmptyState
+                variant="error"
+                title="Failed to Load Statistics"
+                description="Unable to fetch statistics from the server."
+                onRetry={() => refetch()}
+              />
             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+              {/* Events Stat */}
+              <div className="text-center">
+                <div className="mb-2">
+                  {isLoading ? (
+                    <div className="h-16 w-24 mx-auto bg-slate-700/50 rounded animate-pulse"></div>
+                  ) : (
+                    <StatCounter end={parseInt(totalEvents)} duration={1500} delay={0} />
+                  )}
+                </div>
+                <p className="text-sm text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>
+                  Events (since 2016)
+                </p>
+              </div>
 
-            {/* Athletes Stat */}
-            <div className="text-center">
-              <div className="mb-2">
-                {isLoading || isError ? (
-                  <div className="text-6xl font-bold text-gray-500">-</div>
-                ) : (
-                  <StatCounter end={parseInt(totalAthletes)} duration={1500} delay={100} />
-                )}
+              {/* Athletes Stat */}
+              <div className="text-center">
+                <div className="mb-2">
+                  {isLoading ? (
+                    <div className="h-16 w-24 mx-auto bg-slate-700/50 rounded animate-pulse"></div>
+                  ) : (
+                    <StatCounter end={parseInt(totalAthletes)} duration={1500} delay={100} />
+                  )}
+                </div>
+                <p className="text-sm text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>
+                  Athletes
+                </p>
               </div>
-              <p className="text-sm text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>
-                Athletes
-              </p>
-            </div>
 
-            {/* Scores Stat */}
-            <div className="text-center">
-              <div className="mb-2">
-                {isLoading || isError ? (
-                  <div className="text-6xl font-bold text-gray-500">-</div>
-                ) : (
-                  <StatCounter end={parseInt(totalScores)} duration={1500} delay={200} />
-                )}
+              {/* Scores Stat */}
+              <div className="text-center">
+                <div className="mb-2">
+                  {isLoading ? (
+                    <div className="h-16 w-32 mx-auto bg-slate-700/50 rounded animate-pulse"></div>
+                  ) : (
+                    <StatCounter end={parseInt(totalScores)} duration={1500} delay={200} />
+                  )}
+                </div>
+                <p className="text-sm text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>
+                  Wave and Jump Scores
+                </p>
               </div>
-              <p className="text-sm text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>
-                Wave and Jump Scores
-              </p>
             </div>
-          </div>
+          )}
         </div>
       </section>
     </div>

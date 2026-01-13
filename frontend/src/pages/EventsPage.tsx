@@ -1,18 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
 import { Calendar, MapPin, Star, User, LayoutGrid, List } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
 import Select from '../components/ui/Select';
+import EmptyState from '../components/ui/EmptyState';
 
 const EventsPage = () => {
+  const navigate = useNavigate();
+  const prefersReducedMotion = useReducedMotion();
   const [yearFilter, setYearFilter] = useState<string>('all');
   const [eventTypeFilter, setEventTypeFilter] = useState<string>('wave');
   const [statusFilter, setStatusFilter] = useState<string>('completed');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    const saved = localStorage.getItem('eventsViewMode');
+    return saved === 'list' ? 'list' : 'grid';
+  });
 
-  const { data: eventsData, isLoading, error } = useQuery({
+  // Persist view mode preference
+  useEffect(() => {
+    localStorage.setItem('eventsViewMode', viewMode);
+  }, [viewMode]);
+
+  const { data: eventsData, isLoading, error, refetch } = useQuery({
     queryKey: ['events', eventTypeFilter],
     queryFn: () => apiService.getEvents(1, 50, eventTypeFilter === 'wave'),
     retry: 1,
@@ -167,25 +178,28 @@ const EventsPage = () => {
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
-                  className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6 animate-pulse"
+                  className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden animate-pulse"
                 >
-                  <div className="h-6 bg-slate-700 rounded w-3/4 mb-4"></div>
-                  <div className="h-4 bg-slate-700 rounded w-1/2 mb-2"></div>
-                  <div className="h-4 bg-slate-700 rounded w-2/3"></div>
+                  {/* Image skeleton */}
+                  <div className="h-48 bg-slate-700/50"></div>
+                  {/* Content skeleton */}
+                  <div className="p-6 space-y-3">
+                    <div className="h-5 bg-slate-700 rounded w-3/4"></div>
+                    <div className="h-4 bg-slate-700 rounded w-1/3"></div>
+                    <div className="h-4 bg-slate-700 rounded w-1/2"></div>
+                    <div className="h-4 bg-slate-700 rounded w-1/4"></div>
+                  </div>
                 </div>
               ))}
             </div>
           ) : error ? (
-            <div className="text-center py-20">
-              <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-8 max-w-md mx-auto">
-                <h3 className="text-xl font-semibold text-red-400 mb-2">Error Loading Events</h3>
-                <p className="text-gray-300">
-                  Unable to fetch events from the API. Please check your connection and try again.
-                </p>
-                <p className="text-sm text-gray-500 mt-4">
-                  Make sure your FastAPI backend is running and the API URL is configured correctly.
-                </p>
-              </div>
+            <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-8 max-w-md mx-auto">
+              <EmptyState
+                variant="error"
+                title="Failed to Load Events"
+                description="Unable to fetch events from the server. Please check your connection."
+                onRetry={() => refetch()}
+              />
             </div>
           ) : events && events.length > 0 ? (
             <div className="space-y-12">
@@ -205,9 +219,9 @@ const EventsPage = () => {
                         {yearEvents.map((event, index) => (
                           <Link key={event.id} to={`/events/${event.id}`}>
                             <motion.div
-                              initial={{ opacity: 0, y: 20 }}
+                              initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
                               animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.5, delay: index * 0.05 }}
+                              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: index * 0.05 }}
                               className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden hover:bg-slate-800/60 transition-all duration-300 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10 cursor-pointer h-full flex flex-col"
                             >
                               {event.event_image_url && (
@@ -291,11 +305,20 @@ const EventsPage = () => {
                             {yearEvents.map((event, index) => (
                               <motion.tr
                                 key={event.id}
-                                initial={{ opacity: 0 }}
+                                initial={prefersReducedMotion ? false : { opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                transition={{ duration: 0.3, delay: index * 0.02 }}
-                                className="border-b border-slate-700/30 last:border-b-0 hover:bg-slate-700/30 transition-colors cursor-pointer"
-                                onClick={() => window.location.href = `/events/${event.id}`}
+                                transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.3, delay: index * 0.02 }}
+                                className="border-b border-slate-700/30 last:border-b-0 hover:bg-slate-700/30 transition-colors cursor-pointer focus:outline-none focus:bg-slate-700/40"
+                                onClick={() => navigate(`/events/${event.id}`)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    navigate(`/events/${event.id}`);
+                                  }
+                                }}
+                                tabIndex={0}
+                                role="button"
+                                aria-label={`View ${event.event_name} details`}
                               >
                                 <td className="py-3 px-4">
                                   <span

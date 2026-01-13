@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 interface CardProps {
   children: ReactNode;
@@ -24,6 +24,8 @@ const Card = ({
   clickable = false,
   onClick
 }: CardProps) => {
+  const prefersReducedMotion = useReducedMotion();
+
   const hoverClasses = hoverable
     ? 'hover:bg-slate-800/60 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10'
     : '';
@@ -32,9 +34,9 @@ const Card = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5 }}
       onClick={onClick}
       className={`
         bg-slate-800/40

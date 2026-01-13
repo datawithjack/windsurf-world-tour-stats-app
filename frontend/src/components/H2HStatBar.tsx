@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 interface H2HStatBarProps {
   label: string;
@@ -21,6 +21,7 @@ const H2HStatBar = ({
   athlete2Name,
   maxValue,
 }: H2HStatBarProps) => {
+  const prefersReducedMotion = useReducedMotion();
   const localMaxValue = maxValue || Math.max(athlete1Value, athlete2Value);
   const athlete1Percent = localMaxValue > 0 ? (athlete1Value / localMaxValue) * 100 : 0;
   const athlete2Percent = localMaxValue > 0 ? (athlete2Value / localMaxValue) * 100 : 0;
@@ -33,9 +34,9 @@ const H2HStatBar = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -20 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.4 }}
+      transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4 }}
       className="py-4 border-b border-slate-700/30 last:border-0"
     >
       {/* Label */}
@@ -61,9 +62,9 @@ const H2HStatBar = ({
           {/* Athlete 1 Bar */}
           <div className="relative h-12 md:h-14 bg-slate-700/30 rounded-lg overflow-hidden">
             <motion.div
-              initial={{ width: 0 }}
+              initial={prefersReducedMotion ? false : { width: 0 }}
               animate={{ width: `${athlete1Percent}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
+              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.8, ease: 'easeOut' }}
               className={`absolute inset-y-0 left-0 rounded-lg ${
                 winner === 'athlete1'
                   ? 'bg-gradient-to-r from-cyan-500/80 to-cyan-400/60'
@@ -91,9 +92,9 @@ const H2HStatBar = ({
           {/* Athlete 2 Bar */}
           <div className="relative h-12 md:h-14 bg-slate-700/30 rounded-lg overflow-hidden">
             <motion.div
-              initial={{ width: 0 }}
+              initial={prefersReducedMotion ? false : { width: 0 }}
               animate={{ width: `${athlete2Percent}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.8, ease: 'easeOut', delay: 0.1 }}
               className={`absolute inset-y-0 left-0 rounded-lg ${
                 winner === 'athlete2'
                   ? 'bg-gradient-to-r from-teal-500/80 to-teal-400/60'

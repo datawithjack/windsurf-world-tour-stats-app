@@ -1,5 +1,12 @@
 @import "tailwindcss";
-@import "./styles/typography.css";
+
+/**
+ * Typography Approach:
+ * - Headings (h1-h6) use Bebas Neue by default (see rule below)
+ * - Body text uses Inter by default (see body rule)
+ * - Use style={{ fontFamily: 'var(--font-inter)' }} to override headings
+ * - Use Tailwind classes for size: text-sm, text-base, text-lg, etc.
+ */
 
 @theme {
   --color-ocean-50: #f0f9ff;
