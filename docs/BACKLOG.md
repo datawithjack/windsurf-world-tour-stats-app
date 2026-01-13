@@ -2,7 +2,7 @@
 
 A single place to track feature ideas, improvements, and bugs.
 
-**Last Updated**: 2026-01-12
+**Last Updated**: 2026-01-13
 
 ---
 
@@ -37,6 +37,10 @@ A single place to track feature ideas, improvements, and bugs.
 - [ ] **Changelog Page** - Add a public changelog after MVP launch to show users what's new and track updates
 - [ ] **Member Portal** - User login to select favorite athletes or build a team. Could evolve into a fantasy league feature
 - [ ] **Athlete Competition Journey** - Package-delivery-style progress tracker showing an athlete's path through rounds: who they beat, scores per heat, and final placement
+- [ ] **Wave vs Jump Score Breakdown Visualization** - Visual way to show percentage breakdown of wave scores vs jump scores in heats. Could be a pie chart, donut chart, stacked bar, or other visualization showing the composition of an athlete's heat score
+- [ ] **Tooltip Design Review** - Review and improve tooltips throughout the app for consistency, clarity, and helpfulness
+- [ ] **Interactive World Map** - Desktop-only interactive map with pins showing event locations. Click pins to navigate to events. Could use Mapbox, Leaflet, or similar library
+- [ ] **Road to Finals Page** - Bump chart showing rankings progression and possible outcomes 1-2 events out from the season finale. Visualize who can still win the title and what results they need
 
 ---
 
