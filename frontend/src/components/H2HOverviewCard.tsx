@@ -45,38 +45,36 @@ const H2HOverviewCard = ({
       <div className="space-y-6">
         {/* Placement Comparison */}
         <div>
-          <h5 className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-4 text-center" style={{ fontFamily: 'var(--font-inter)' }}>
+          <h5 className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-4 text-center">
             Final Placement
           </h5>
           <div className="flex items-center justify-center gap-8 py-2">
             <div className="text-center">
               <div
-                className={`text-4xl sm:text-5xl font-bold mb-2 ${
+                className={`text-4xl sm:text-5xl font-bold mb-2 font-bebas ${
                   athlete1Place < athlete2Place ? 'text-cyan-400' : 'text-gray-400'
                 }`}
-                style={{ fontFamily: 'var(--font-bebas)' }}
               >
                 {athlete1Place}{getPlacementSuffix(athlete1Place)}
               </div>
               <p className={`text-xs font-medium ${
                 athlete1Place < athlete2Place ? 'text-cyan-400' : 'text-gray-500'
-              }`} style={{ fontFamily: 'var(--font-inter)' }}>
+              }`}>
                 {athlete1Surname}
               </p>
             </div>
-            <div className="text-xl text-gray-600 font-bold" style={{ fontFamily: 'var(--font-bebas)' }}>VS</div>
+            <div className="text-xl text-gray-600 font-bold font-bebas">VS</div>
             <div className="text-center">
               <div
-                className={`text-4xl sm:text-5xl font-bold mb-2 ${
+                className={`text-4xl sm:text-5xl font-bold mb-2 font-bebas ${
                   athlete2Place < athlete1Place ? 'text-teal-400' : 'text-gray-400'
                 }`}
-                style={{ fontFamily: 'var(--font-bebas)' }}
               >
                 {athlete2Place}{getPlacementSuffix(athlete2Place)}
               </div>
               <p className={`text-xs font-medium ${
                 athlete2Place < athlete1Place ? 'text-teal-400' : 'text-gray-500'
-              }`} style={{ fontFamily: 'var(--font-inter)' }}>
+              }`}>
                 {athlete2Surname}
               </p>
             </div>
@@ -85,38 +83,36 @@ const H2HOverviewCard = ({
 
         {/* Heat Wins */}
         <div className="border-t border-slate-700/30 pt-4">
-          <h5 className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-4 text-center" style={{ fontFamily: 'var(--font-inter)' }}>
+          <h5 className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-4 text-center">
             Heat Wins
           </h5>
           <div className="flex items-center justify-center gap-8 py-2">
             <div className="text-center">
               <div
-                className={`text-4xl sm:text-5xl font-bold mb-2 ${
+                className={`text-4xl sm:text-5xl font-bold mb-2 font-bebas ${
                   heatWins.winner === 'athlete1' ? 'text-cyan-400' : 'text-gray-400'
                 }`}
-                style={{ fontFamily: 'var(--font-bebas)' }}
               >
                 {heatWins.athlete1_value}
               </div>
               <p className={`text-xs font-medium ${
                 heatWins.winner === 'athlete1' ? 'text-cyan-400' : 'text-gray-500'
-              }`} style={{ fontFamily: 'var(--font-inter)' }}>
+              }`}>
                 {athlete1Surname}
               </p>
             </div>
-            <div className="text-xl text-gray-600 font-bold" style={{ fontFamily: 'var(--font-bebas)' }}>VS</div>
+            <div className="text-xl text-gray-600 font-bold font-bebas">VS</div>
             <div className="text-center">
               <div
-                className={`text-4xl sm:text-5xl font-bold mb-2 ${
+                className={`text-4xl sm:text-5xl font-bold mb-2 font-bebas ${
                   heatWins.winner === 'athlete2' ? 'text-teal-400' : 'text-gray-400'
                 }`}
-                style={{ fontFamily: 'var(--font-bebas)' }}
               >
                 {heatWins.athlete2_value}
               </div>
               <p className={`text-xs font-medium ${
                 heatWins.winner === 'athlete2' ? 'text-teal-400' : 'text-gray-500'
-              }`} style={{ fontFamily: 'var(--font-inter)' }}>
+              }`}>
                 {athlete2Surname}
               </p>
             </div>

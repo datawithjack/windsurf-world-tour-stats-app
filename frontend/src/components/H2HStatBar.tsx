@@ -41,7 +41,7 @@ const H2HStatBar = ({
     >
       {/* Label */}
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs sm:text-sm text-gray-400 uppercase tracking-wide font-medium" style={{ fontFamily: 'var(--font-inter)' }}>
+        <p className="text-xs sm:text-sm text-gray-400 uppercase tracking-wide font-medium">
           {label}
         </p>
         {winner !== 'tie' && difference > 0 && hasData && (
@@ -55,7 +55,7 @@ const H2HStatBar = ({
 
       {!hasData ? (
         <div className="text-center py-4">
-          <p className="text-sm text-gray-500 italic" style={{ fontFamily: 'var(--font-inter)' }}>No Data Available</p>
+          <p className="text-sm text-gray-500 italic">No Data Available</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -74,16 +74,14 @@ const H2HStatBar = ({
             <div className="absolute inset-0 flex items-center justify-between px-3">
               <span
                 className="text-sm sm:text-base font-bold text-white uppercase tracking-wide"
-                style={{ fontFamily: 'var(--font-inter)' }}
-              >
+                             >
                 {athlete1Surname}
               </span>
               <span
                 className={`text-lg sm:text-xl font-bold ${
                   winner === 'athlete1' ? 'text-white' : 'text-gray-300'
                 }`}
-                style={{ fontFamily: 'var(--font-inter)' }}
-              >
+                             >
                 {athlete1Value}
               </span>
             </div>
@@ -104,16 +102,14 @@ const H2HStatBar = ({
             <div className="absolute inset-0 flex items-center justify-between px-3">
               <span
                 className="text-sm sm:text-base font-bold text-white uppercase tracking-wide"
-                style={{ fontFamily: 'var(--font-inter)' }}
-              >
+                             >
                 {athlete2Surname}
               </span>
               <span
                 className={`text-lg sm:text-xl font-bold ${
                   winner === 'athlete2' ? 'text-white' : 'text-gray-300'
                 }`}
-                style={{ fontFamily: 'var(--font-inter)' }}
-              >
+                             >
                 {athlete2Value}
               </span>
             </div>

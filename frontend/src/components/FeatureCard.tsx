@@ -19,7 +19,7 @@ const FeatureCard = ({ title, children, isLoading = false, headerAction }: Featu
       className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-white" style={{ fontFamily: 'var(--font-inter)' }}>
+        <h3 className="text-base font-semibold text-white font-inter">
           {title}
         </h3>
         {headerAction}

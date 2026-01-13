@@ -1,6 +1,7 @@
 # Product Roadmap - Windsurf World Tour Stats App
 
 **Created**: 2026-01-13
+**Last Updated**: 2026-01-13
 **Strategy**: Release Events section first to core windsurf community, then expand.
 
 ---
@@ -8,53 +9,53 @@
 ## Release Strategy
 
 ```
-Phase 0: MVP Fixes          → Fix critical bugs before any release
-Phase 1: Events MVP         → Release to PWA, riders, core fans
-Phase 2: Polish & Feedback  → Iterate based on user feedback
-Phase 3: Athletes Section   → Full athlete browsing and profiles
-Phase 4: Head-to-Head       → Cross-event athlete comparisons
-Phase 5: Community Features → User engagement and growth
+Phase 0: MVP Fixes          → ✅ COMPLETE
+Phase 1: Events MVP         → 🔄 READY TO LAUNCH (minor items remain)
+Phase 2: Polish & Feedback  → Planned
+Phase 3: Athletes Section   → Planned
+Phase 4: Head-to-Head       → Planned
+Phase 5: Community Features → Ideas only
 ```
 
 ---
 
-## Phase 0: MVP Blockers
+## Phase 0: MVP Blockers - ✅ COMPLETE
 
 **Goal**: Fix issues that would embarrass us or confuse users.
-**Audience**: Internal testing only
+**Status**: All critical and high priority fixes complete.
 
-### Critical Fixes (Must Complete)
+### Critical Fixes - ✅ ALL DONE
 
-| Task | Issue | File | Effort |
-|------|-------|------|--------|
-| [ ] Fix React Router navigation | Uses `window.location` instead of navigate | EventsPage.tsx:298 | 30min |
-| [ ] Add gender switch notification | Silent Women→Men switch is confusing | EventResultsPage.tsx:67-76 | 1hr |
-| [ ] Add error retry buttons | No recovery when API fails | LandingPage, EventsPage | 2hr |
-| [ ] Fix keyboard navigation | Table rows not keyboard accessible | ResultsTable, TopScoresTable | 2hr |
+| Task | Issue | Status |
+|------|-------|--------|
+| ~~Fix React Router navigation~~ | Uses `window.location` instead of navigate | ✅ Done |
+| ~~Add gender switch notification~~ | Silent Women→Men switch is confusing | ✅ Done |
+| ~~Add error retry buttons~~ | No recovery when API fails | ✅ Done |
+| ~~Fix keyboard navigation~~ | Table rows not keyboard accessible | ✅ Done |
 
-### High Priority Fixes
+### High Priority Fixes - ✅ ALL DONE
 
-| Task | Issue | File | Effort |
-|------|-------|------|--------|
-| [ ] Add reduced motion support | No prefers-reduced-motion check | All Framer Motion | 1hr |
-| [ ] Add ARIA live regions | Screen readers miss animated content | StatCounter | 30min |
-| [ ] Consistent loading skeletons | Skeleton doesn't match final layout | EventsPage | 2hr |
-| [ ] Add back navigation | Users rely on browser back button | EventResultsPage | 1hr |
+| Task | Issue | Status |
+|------|-------|--------|
+| ~~Add reduced motion support~~ | No prefers-reduced-motion check | ✅ Done |
+| ~~Add ARIA live regions~~ | Screen readers miss animated content | ✅ Done |
+| ~~Consistent loading skeletons~~ | Skeleton doesn't match final layout | ✅ Done |
 
-### Definition of Done
-- [ ] All critical fixes merged
+### Definition of Done - Phase 0
+- [x] All critical fixes merged
 - [ ] Tested on Chrome, Firefox, Safari
 - [ ] Tested on mobile (iOS Safari, Android Chrome)
 - [ ] Internal walkthrough with no blockers found
 
 ---
 
-## Phase 1: Events MVP Release
+## Phase 1: Events MVP Release - 🔄 READY TO LAUNCH
 
 **Goal**: Ship Events section to core windsurf community.
 **Audience**: PWA staff, professional riders, dedicated fans (50-100 users)
+**Status**: Features complete, polish complete, ready for final checklist.
 
-### Features (Already Complete)
+### Features - ✅ ALL COMPLETE
 - [x] Events listing page with filters (year, status, type)
 - [x] Grid and list view modes
 - [x] Event results with rankings table
@@ -64,25 +65,37 @@ Phase 5: Community Features → User engagement and growth
 - [x] Mobile responsive design
 - [x] Production API deployed
 
-### Polish Items
+### Polish Items - ✅ ALL COMPLETE
 
-| Task | Effort |
+| Task | Status |
 |------|--------|
-| [ ] Add filter state to URL (refresh preserves filters) | 2hr |
-| [ ] Persist view mode preference to localStorage | 30min |
-| [ ] Add medal colors to TopScoresTable | 30min |
-| [ ] Fix table border inconsistencies | 1hr |
-| [ ] Add "Back to Events" button on results page | 30min |
-| [ ] Improve empty state messaging (be more helpful) | 1hr |
+| ~~Add filter state to URL~~ | ✅ Done |
+| ~~Persist view mode preference~~ | ✅ Done |
+| ~~Add medal colors to TopScoresTable~~ | ✅ Done |
+| ~~Fix table border inconsistencies~~ | ✅ Done |
+| ~~Improve empty state messaging~~ | ✅ Done |
 
-### Release Checklist
-- [ ] Phase 0 fixes complete
-- [ ] Polish items complete
-- [ ] Performance check (Lighthouse score >80)
-- [ ] Accessibility check (axe scan, fix critical issues)
-- [ ] Final QA walkthrough
-- [ ] Prepare feedback collection method (Google Form, Discord, etc.)
-- [ ] Announce to initial user group
+### Code Quality - ✅ COMPLETE
+
+| Task | Status |
+|------|--------|
+| ~~Refactor EventStatsTabContent (522→370 lines)~~ | ✅ Done - extracted ScoreTable, StatsFilterBar, ShowMoreButton |
+| ~~Remove unused typography classes~~ | ✅ Done |
+| ~~Standardize transition timing~~ | ✅ Done |
+
+### Release Checklist - BEFORE LAUNCH
+
+| Task | Status | Notes |
+|------|--------|-------|
+| Phase 0 fixes complete | ✅ Done | All 7 items fixed |
+| Polish items complete | ✅ Done | All 5 items fixed |
+| Performance check (Lighthouse >80) | ⬜ TODO | Run audit |
+| Accessibility check (axe scan) | ⬜ TODO | Fix critical issues |
+| Cross-browser testing | ⬜ TODO | Chrome, Firefox, Safari |
+| Mobile testing | ⬜ TODO | iOS Safari, Android Chrome |
+| Final QA walkthrough | ⬜ TODO | No blockers |
+| Feedback collection method | ⬜ TODO | Google Form or Discord |
+| Announce to initial user group | ⬜ TODO | - |
 
 ### Success Metrics
 - Users can browse events without confusion
@@ -96,6 +109,7 @@ Phase 5: Community Features → User engagement and growth
 
 **Goal**: Iterate based on real user feedback from Phase 1.
 **Audience**: Same initial group + word-of-mouth growth
+**Status**: Planned - waiting for Phase 1 feedback
 
 ### Expected Feedback Areas
 Based on design review, users will likely report:
@@ -115,12 +129,12 @@ Based on design review, users will likely report:
 | [ ] Toast notifications for user actions | Backlog: Medium Priority | 2hr |
 | [ ] Lazy load images | Performance | 1hr |
 
-### Code Quality
+### Technical Improvements
 
 | Task | Source | Effort |
 |------|--------|--------|
-| [ ] Refactor EventStatsTabContent (522 lines) | Design review | 4hr |
-| [ ] Standardize typography usage | Design review | 2hr |
+| [ ] Route-level code splitting | Design review | 30min |
+| [ ] Add error boundaries | Design review | 30min |
 | [ ] Add basic component tests | Backlog | 4hr |
 | [ ] Remove unused API methods | Backlog | 30min |
 
@@ -136,6 +150,7 @@ Based on design review, users will likely report:
 
 **Goal**: Launch comprehensive athlete browsing and profiles.
 **Audience**: Broader windsurf community
+**Status**: Planned
 
 ### Core Features
 
@@ -173,6 +188,7 @@ Based on design review, users will likely report:
 
 **Goal**: Compare athletes across their entire careers.
 **Audience**: Stats enthusiasts, fantasy players
+**Status**: Planned
 
 ### Core Features
 
@@ -203,6 +219,7 @@ Based on design review, users will likely report:
 
 **Goal**: Build engagement and grow user base.
 **Audience**: General windsurf fans, potential new fans
+**Status**: Ideas only
 
 ### Engagement Features
 
@@ -230,57 +247,73 @@ From backlog Ideas section - evaluate based on user demand:
 | Road to Finals page | Championship scenarios |
 | Chatbot assistant | AI Q&A about athletes/events |
 
-### Monetization/Support (Optional)
-
-| Feature | Notes |
-|---------|-------|
-| [ ] Buy Me a Coffee link | Support development |
-| [ ] Sponsor acknowledgment | Credit data sources |
-
 ---
 
 ## Technical Debt Roadmap
 
-Address alongside feature work:
+### Phase 2 (During Feedback)
 
-### Phase 1-2 (During MVP)
-
-| Task | Priority |
-|------|----------|
-| [ ] Add React Error Boundary | High |
-| [ ] Add axios error interceptors | High |
-| [ ] Standardize terminology (Rider → Athlete) | Medium |
-| [ ] Fix inline styles → Tailwind classes | Medium |
+| Task | Priority | Status |
+|------|----------|--------|
+| Route code splitting | High | ⬜ TODO |
+| Add error boundaries | High | ⬜ TODO |
+| Add axios error interceptors | Medium | ⬜ TODO |
+| Add Vitest tests for API service | Medium | ⬜ TODO |
+| Set up Playwright E2E tests | Medium | ⬜ TODO |
+| Add Playwright MCP for automated cross-browser/mobile testing | Low | ⬜ TODO |
 
 ### Phase 3-4 (During Expansion)
 
-| Task | Priority |
-|------|----------|
-| [ ] Split EventResultsPage into sub-components | High |
-| [ ] Add Vitest tests for API service | High |
-| [ ] Add component snapshot tests | Medium |
-| [ ] Implement route code splitting | Medium |
+| Task | Priority | Status |
+|------|----------|--------|
+| Split EventResultsPage into sub-components | Medium | ⬜ TODO |
+| Split HeadToHeadComparison | Low | ⬜ TODO |
+| Add component snapshot tests | Low | ⬜ TODO |
 
 ### Ongoing
 
 | Task | Priority |
 |------|----------|
-| [ ] Accessibility audits (quarterly) | High |
-| [ ] Performance monitoring | Medium |
-| [ ] Bundle size monitoring | Low |
+| Accessibility audits (quarterly) | High |
+| Performance monitoring | Medium |
+| Bundle size monitoring | Low |
 
 ---
 
-## Data Quality Roadmap
+## Current Status Summary
 
-From BACKLOG.md Data Quality Issues:
+**Last Updated**: 2026-01-13
 
-| Issue | Status | Priority |
-|-------|--------|----------|
-| [x] Move type abbreviations | Fixed 2026-01-12 | - |
-| [ ] Empty move types (3,894 records) | Data collection issue | Low |
-| [ ] "Jump" generic type (278 records) | Need lookup entry | Low |
-| [ ] Elimination round derivation | Requires data cleaning | Phase 5 |
+| Phase | Status | What's Left |
+|-------|--------|-------------|
+| Phase 0 | ✅ COMPLETE | Nothing |
+| Phase 1 | 🔄 READY | Final checklist (testing, Lighthouse, axe scan) |
+| Phase 2 | Planned | Awaiting Phase 1 feedback |
+| Phase 3 | Planned | - |
+| Phase 4 | Planned | - |
+| Phase 5 | Ideas | - |
+
+### MVP Launch Checklist (What's Left)
+
+```
+⬜ 1. Run Lighthouse audit (target >80 performance)
+⬜ 2. Run axe accessibility scan (fix critical issues)
+⬜ 3. Test on Chrome, Firefox, Safari
+⬜ 4. Test on iOS Safari and Android Chrome
+⬜ 5. Final walkthrough - no blockers
+⬜ 6. Set up feedback collection (Google Form recommended)
+⬜ 7. Announce to initial users
+```
+
+**Estimated time to launch: 2-4 hours of testing/polish**
+
+### Post-Launch Setup
+
+```
+⬜ Connect custom domain name
+⬜ Add changelog page for updates
+⬜ Set up dev branch workflow (main = production, dev = staging)
+```
 
 ---
 
@@ -288,59 +321,12 @@ From BACKLOG.md Data Quality Issues:
 
 | Phase | Key Metric | Target |
 |-------|------------|--------|
-| Phase 0 | Critical bugs | 0 |
+| Phase 0 | Critical bugs | ✅ 0 |
 | Phase 1 | Active users (weekly) | 25+ |
 | Phase 2 | User satisfaction | "Useful" feedback |
 | Phase 3 | Athletes viewed | 100+ unique profiles |
 | Phase 4 | H2H comparisons | 50+ comparisons/week |
 | Phase 5 | Return visitors | 40%+ return rate |
-
----
-
-## Current Status
-
-**Last Updated**: 2026-01-13
-
-| Phase | Status | Blockers |
-|-------|--------|----------|
-| Phase 0 | Not Started | Need to begin |
-| Phase 1 | Features Complete | Awaiting Phase 0 |
-| Phase 2 | Planned | Awaiting Phase 1 release |
-| Phase 3 | Planned | - |
-| Phase 4 | Planned | - |
-| Phase 5 | Ideas only | - |
-
-### Next Actions
-1. Complete Phase 0 critical fixes
-2. Complete Phase 0 high priority fixes
-3. Release Phase 1 to initial user group
-4. Collect feedback for Phase 2 planning
-
----
-
-## Appendix: Full Backlog Mapping
-
-### From BACKLOG.md → Roadmap Phase
-
-| Backlog Item | Roadmap Phase |
-|--------------|---------------|
-| Axios error interceptors | Phase 0 |
-| Remove unused API methods | Phase 2 |
-| Standardize terminology | Phase 2 |
-| Split EventResultsPage | Phase 2 |
-| Add React Error Boundary | Phase 1 |
-| Add Vitest tests | Phase 2 |
-| Athletes page | Phase 3 |
-| Head-to-Heads page | Phase 4 |
-| Search functionality | Phase 2 |
-| Filter state persistence | Phase 1 |
-| Back navigation | Phase 0 |
-| Sortable table columns | Phase 2 |
-| Toast notifications | Phase 2 |
-| Season rankings | Phase 5 |
-| Heat bracket visualization | Phase 5+ |
-| Export data | Phase 5+ |
-| User accounts | Phase 5+ |
 
 ---
 

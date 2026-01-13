@@ -766,6 +766,34 @@ max-w-7xl  /* Main container (1280px) */
 max-w-4xl  /* Content container (896px) */
 ```
 
+### Gap Spacing Rationale
+
+| Gap | Value | Usage |
+|-----|-------|-------|
+| `gap-3` | 12px | Tight groupings (icon + text, small badges) |
+| `gap-4` | 16px | Compact grids (mobile cards, dense lists) |
+| `gap-6` | 24px | **Standard** - Card grids, feature sections |
+| `gap-8` | 32px | Large separation (major sections) |
+
+**Rule of thumb:**
+- `gap-6` is the default for card grids and component spacing
+- `gap-4` for tighter layouts or mobile views
+- `gap-3` only for inline elements
+
+### Shadow Patterns
+
+| Context | Shadow Classes | Purpose |
+|---------|----------------|---------|
+| Interactive cards on hover | `hover:shadow-lg hover:shadow-cyan-500/10` | Subtle colored glow |
+| Primary buttons on hover | `hover:shadow-lg hover:shadow-cyan-500/30` | Strong colored glow |
+| Chart tooltips | `shadow-lg` or `shadow-xl` | Elevation above content |
+| Dropdowns/floating | `shadow-lg shadow-black/20` | Dark shadow for separation |
+
+**Rule of thumb:**
+- Interactive elements get colored shadows (`cyan-500/10` or `/30`)
+- Floating/overlay elements use dark shadows (`black/20`)
+- Use `shadow-lg` for standard elevation, `shadow-xl` for tooltips
+
 ### Usage Guidelines
 
 **Page Layout Pattern:**

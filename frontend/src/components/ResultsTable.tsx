@@ -89,7 +89,7 @@ const ResultsTable = ({ results, isLoading = false, onAthleteClick }: ResultsTab
           {results.map((result, index) => (
             <tr
               key={result.id || `result-${index}`}
-              className="border-b border-slate-700/30 hover:bg-slate-700/20 transition-colors duration-200"
+              className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200"
             >
               <td className="py-4 px-4">
                 <div className="flex items-center">

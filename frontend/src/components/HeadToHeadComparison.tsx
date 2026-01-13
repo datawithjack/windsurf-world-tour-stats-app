@@ -148,14 +148,14 @@ const HeadToHeadComparison = ({ eventId, gender }: HeadToHeadComparisonProps) =>
               <div className="flex items-center justify-center">
                 <div className="hidden sm:flex items-center justify-center px-4">
                   <div className="w-16 h-16 rounded-full bg-slate-700/50 border-2 border-slate-600/50 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-gray-400" style={{ fontFamily: 'var(--font-bebas)' }}>
+                    <span className="text-2xl font-bold text-gray-400 font-bebas">
                       VS
                     </span>
                   </div>
                 </div>
                 <div className="sm:hidden w-full flex items-center gap-4 py-2">
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
-                  <span className="text-xl font-bold text-gray-400 px-4" style={{ fontFamily: 'var(--font-bebas)' }}>VS</span>
+                  <span className="text-xl font-bold text-gray-400 px-4 font-bebas">VS</span>
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
                 </div>
               </div>

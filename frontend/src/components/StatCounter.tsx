@@ -66,10 +66,9 @@ const StatCounter = ({ end, duration = 2000, suffix = '', delay = 0 }: StatCount
 
   return (
     <span
-      className={`text-6xl md:text-7xl text-white transition-opacity duration-500 ${
+      className={`text-6xl md:text-7xl text-white transition-opacity duration-500 font-bebas ${
         isComplete ? 'opacity-100' : 'opacity-70'
       }`}
-      style={{ fontFamily: 'var(--font-bebas)' }}
       aria-live={isComplete ? 'polite' : 'off'}
       aria-atomic="true"
     >

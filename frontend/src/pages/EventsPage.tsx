@@ -274,7 +274,7 @@ const EventsPage = () => {
                               )}
                               <div className="p-6 flex-1 flex flex-col">
                                 <div className="mb-3">
-                                  <h3 className="text-sm md:text-base font-extrabold text-white line-clamp-2 leading-tight" style={{ fontFamily: 'var(--font-inter)' }} title={event.event_name}>
+                                  <h3 className="text-sm md:text-base font-extrabold text-white line-clamp-2 leading-tight font-inter" title={event.event_name}>
                                     {event.event_name}
                                   </h3>
                                 </div>
@@ -330,7 +330,7 @@ const EventsPage = () => {
                                 initial={prefersReducedMotion ? false : { opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.3, delay: index * 0.02 }}
-                                className="border-b border-slate-700/30 last:border-b-0 hover:bg-slate-700/30 transition-colors cursor-pointer focus:outline-none focus:bg-slate-700/40"
+                                className="border-b border-slate-700/30 last:border-b-0 hover:bg-slate-800/40 transition-colors cursor-pointer focus:outline-none focus:bg-slate-700/40"
                                 onClick={() => navigate(`/events/${event.id}`)}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' || e.key === ' ') {

@@ -35,10 +35,10 @@ const H2HAthleteCard = ({
         </div>
       )}
       <div>
-        <h3 className={`text-xl font-bold ${textColor} mb-1`} style={{ fontFamily: 'var(--font-inter)' }}>
+        <h3 className={`text-xl font-bold ${textColor} mb-1 font-inter`}>
           {name}
         </h3>
-        <p className="text-sm text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>
+        <p className="text-sm text-gray-400">
           {nationality}
         </p>
       </div>

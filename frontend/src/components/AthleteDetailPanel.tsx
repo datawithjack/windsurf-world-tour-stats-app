@@ -55,7 +55,7 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Best Heat Score */}
         <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6">
-          <h3 className="text-base font-medium text-white mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
+          <h3 className="text-base font-medium text-white mb-2 font-inter">
             Best Heat Score
           </h3>
           {summary_stats.best_heat_score && summary_stats.best_heat_score.score != null ? (
@@ -75,7 +75,7 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
 
         {/* Best Jump Score */}
         <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6">
-          <h3 className="text-base font-medium text-white mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
+          <h3 className="text-base font-medium text-white mb-2 font-inter">
             Best Jump Score
           </h3>
           {summary_stats.best_jump_score && summary_stats.best_jump_score.score != null ? (
@@ -96,7 +96,7 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
 
         {/* Best Wave Score */}
         <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6">
-          <h3 className="text-base font-medium text-white mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
+          <h3 className="text-base font-medium text-white mb-2 font-inter">
             Best Wave Score
           </h3>
           {summary_stats.best_wave_score && summary_stats.best_wave_score.score != null ? (
@@ -158,7 +158,7 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
                 {jump_scores?.map((score, index) => (
                   <tr
                     key={index}
-                    className="border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors"
+                    className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors"
                   >
                     <td className="py-3 px-2 text-gray-300">{score.round_name}</td>
                     <td className="py-3 px-2 text-gray-300">{score.move}</td>
@@ -204,7 +204,7 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
                 {wave_scores?.map((score, index) => (
                   <tr
                     key={index}
-                    className="border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors"
+                    className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors"
                   >
                     <td className="py-3 px-2 text-gray-300">{score.round_name}</td>
                     <td className="py-3 px-2 text-right font-semibold text-white">

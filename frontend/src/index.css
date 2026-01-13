@@ -4,7 +4,8 @@
  * Typography Approach:
  * - Headings (h1-h6) use Bebas Neue by default (see rule below)
  * - Body text uses Inter by default (see body rule)
- * - Use style={{ fontFamily: 'var(--font-inter)' }} to override headings
+ * - Use 'font-inter' class to override headings back to Inter
+ * - Use 'font-bebas' class on non-headings for display numbers
  * - Use Tailwind classes for size: text-sm, text-base, text-lg, etc.
  */
 
@@ -21,9 +22,18 @@
   --color-ocean-900: #0c4a6e;
   --color-ocean-950: #082f49;
 
-  /* Font families */
+  /* Font families - creates font-bebas and font-inter utilities */
   --font-bebas: 'Bebas Neue', sans-serif;
   --font-inter: 'Inter', sans-serif;
+}
+
+/* Utility class to override heading font back to Inter */
+.font-inter {
+  font-family: var(--font-inter) !important;
+}
+
+.font-bebas {
+  font-family: var(--font-bebas) !important;
 }
 
 body {

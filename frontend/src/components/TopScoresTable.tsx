@@ -83,8 +83,20 @@ const TopScoresTable = ({
                   key={index}
                   className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200"
                 >
-                  <td className="py-3 px-4 text-sm text-gray-400 font-semibold">
-                    {index + 1}
+                  <td className="py-3 px-4 text-sm font-semibold">
+                    <span
+                      className={
+                        index === 0
+                          ? 'text-yellow-400'
+                          : index === 1
+                          ? 'text-gray-300'
+                          : index === 2
+                          ? 'text-amber-600'
+                          : 'text-gray-400'
+                      }
+                    >
+                      {index + 1}
+                    </span>
                   </td>
                   <td className="py-3 px-4 text-sm text-white">{entry.athlete}</td>
                   <td className="py-3 px-4 text-sm text-right text-white font-semibold">

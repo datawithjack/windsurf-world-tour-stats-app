@@ -104,7 +104,7 @@ const FlipCard = ({ title, scoreData, type }: FlipCardProps) => {
       >
         {/* Fixed height header area */}
         <div className="flex-none">
-          <h3 className="text-base font-medium text-white mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
+          <h3 className="text-base font-medium text-white mb-2 font-inter">
             {title}
           </h3>
           <p className="text-4xl font-bold text-white mb-2">{scoreData.score != null ? scoreData.score.toFixed(2) : '0.00'} pts</p>

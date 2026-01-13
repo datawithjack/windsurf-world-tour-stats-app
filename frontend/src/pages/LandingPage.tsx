@@ -80,7 +80,7 @@ const LandingPage = () => {
                     <StatCounter end={parseInt(totalEvents)} duration={1500} delay={0} />
                   )}
                 </div>
-                <p className="text-sm text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>
+                <p className="text-sm text-gray-400">
                   Events (since 2016)
                 </p>
               </div>
@@ -94,7 +94,7 @@ const LandingPage = () => {
                     <StatCounter end={parseInt(totalAthletes)} duration={1500} delay={100} />
                   )}
                 </div>
-                <p className="text-sm text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>
+                <p className="text-sm text-gray-400">
                   Athletes
                 </p>
               </div>
@@ -108,7 +108,7 @@ const LandingPage = () => {
                     <StatCounter end={parseInt(totalScores)} duration={1500} delay={200} />
                   )}
                 </div>
-                <p className="text-sm text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>
+                <p className="text-sm text-gray-400">
                   Wave and Jump Scores
                 </p>
               </div>
