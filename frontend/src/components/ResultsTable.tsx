@@ -1,5 +1,6 @@
 import type { AthleteResult } from '../types';
 import { useState } from 'react';
+import EmptyState from './ui/EmptyState';
 
 interface ResultsTableProps {
   results: AthleteResult[];
@@ -57,10 +58,11 @@ const ResultsTable = ({ results, isLoading = false, onAthleteClick }: ResultsTab
 
   if (results.length === 0) {
     return (
-      <div className="text-gray-400 text-center py-12">
-        <p className="text-lg mb-2">No Results Available</p>
-        <p className="text-sm text-gray-500">Results for this event will appear here</p>
-      </div>
+      <EmptyState
+        variant="no-results"
+        title="No Results Available"
+        description="Results for this event will appear here."
+      />
     );
   }
 

@@ -7,8 +7,8 @@ const Navigation = () => {
   const location = useLocation();
 
   const navItems = [
-    { name: 'ATHLETES', path: '/athletes', disabled: true },
-    { name: 'HEAD TO HEADS', path: '/head-to-heads', disabled: true },
+    { name: 'ATHLETES', path: '/athletes', disabled: false },
+    { name: 'HEAD TO HEADS', path: '/head-to-heads', disabled: false },
     { name: 'EVENTS', path: '/events', disabled: false },
   ];
 

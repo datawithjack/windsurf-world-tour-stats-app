@@ -4,6 +4,7 @@ import { Calendar, MapPin, Star, User, LayoutGrid, List } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useState, useMemo } from 'react';
+import Select from '../components/ui/Select';
 
 const EventsPage = () => {
   const [yearFilter, setYearFilter] = useState<string>('all');
@@ -95,41 +96,38 @@ const EventsPage = () => {
             {/* Filters - Top right on desktop, below title on mobile */}
             <div className="flex items-center gap-3 lg:pt-2 flex-wrap">
               {/* Year Filter */}
-              <select
+              <Select
                 value={yearFilter}
                 onChange={(e) => setYearFilter(e.target.value)}
                 aria-label="Filter events by year"
-                className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm"
               >
                 <option value="all">All Years</option>
                 {availableYears.map(year => (
                   <option key={year} value={year.toString()}>{year}</option>
                 ))}
-              </select>
+              </Select>
 
               {/* Status Filter */}
-              <select
+              <Select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 aria-label="Filter events by status"
-                className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm"
               >
                 <option value="all">All</option>
                 <option value="completed">Completed</option>
                 <option value="upcoming">Upcoming</option>
-              </select>
+              </Select>
 
               {/* Event Type Filter */}
-              <select
+              <Select
                 value={eventTypeFilter}
                 onChange={(e) => setEventTypeFilter(e.target.value)}
                 aria-label="Filter events by type"
-                className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm"
               >
                 <option value="all">All Events</option>
                 <option value="wave">Wave</option>
                 <option value="non-wave">Non-Wave</option>
-              </select>
+              </Select>
 
               {/* View Toggle */}
               <div className="flex items-center gap-1 bg-slate-800/60 border border-slate-700/50 rounded-md p-1">

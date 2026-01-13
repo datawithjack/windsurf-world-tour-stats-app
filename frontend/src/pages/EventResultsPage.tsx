@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Star, User } from 'lucide-react';
+import { ArrowLeft, Star, User, Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
@@ -8,6 +8,8 @@ import ResultsTable from '../components/ResultsTable';
 import EventStatsTabContent from '../components/EventStatsTabContent';
 import AthleteStatsTab from '../components/AthleteStatsTab';
 import HeadToHeadComparison from '../components/HeadToHeadComparison';
+import Select from '../components/ui/Select';
+import SearchableSelect from '../components/ui/SearchableSelect';
 
 const EventResultsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -183,40 +185,49 @@ const EventResultsPage = () => {
             <button
               ref={(el) => { tabRefs.current['results'] = el; }}
               onClick={() => setActiveTab('results')}
-              className={`px-6 py-3 font-semibold text-sm uppercase tracking-wide transition-all duration-200 whitespace-nowrap ${
+              className={`px-6 py-3 font-semibold text-sm uppercase tracking-wide transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
                 activeTab === 'results'
                   ? 'text-white border-b-2 border-cyan-500'
                   : 'text-gray-500 hover:text-gray-300'
               }`}
             >
               Results
+              {activeTab === 'results' && resultsLoading && (
+                <Loader2 size={14} className="animate-spin text-cyan-400" />
+              )}
             </button>
             <button
               ref={(el) => { tabRefs.current['event-stats'] = el; }}
               onClick={() => setActiveTab('event-stats')}
-              className={`px-6 py-3 font-semibold text-sm uppercase tracking-wide transition-all duration-200 whitespace-nowrap ${
+              className={`px-6 py-3 font-semibold text-sm uppercase tracking-wide transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
                 activeTab === 'event-stats'
                   ? 'text-white border-b-2 border-cyan-500'
                   : 'text-gray-500 hover:text-gray-300'
               }`}
             >
               Event Stats
+              {activeTab === 'event-stats' && statsLoading && (
+                <Loader2 size={14} className="animate-spin text-cyan-400" />
+              )}
             </button>
             <button
               ref={(el) => { tabRefs.current['athlete-stats'] = el; }}
               onClick={() => setActiveTab('athlete-stats')}
-              className={`px-6 py-3 font-semibold text-sm uppercase tracking-wide transition-all duration-200 whitespace-nowrap ${
+              className={`px-6 py-3 font-semibold text-sm uppercase tracking-wide transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
                 activeTab === 'athlete-stats'
                   ? 'text-white border-b-2 border-cyan-500'
                   : 'text-gray-500 hover:text-gray-300'
               }`}
             >
               Athlete Stats
+              {activeTab === 'athlete-stats' && athleteListLoading && (
+                <Loader2 size={14} className="animate-spin text-cyan-400" />
+              )}
             </button>
             <button
               ref={(el) => { tabRefs.current['head-to-head'] = el; }}
               onClick={() => setActiveTab('head-to-head')}
-              className={`px-6 py-3 font-semibold text-sm uppercase tracking-wide transition-all duration-200 whitespace-nowrap ${
+              className={`px-6 py-3 font-semibold text-sm uppercase tracking-wide transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
                 activeTab === 'head-to-head'
                   ? 'text-white border-b-2 border-cyan-500'
                   : 'text-gray-500 hover:text-gray-300'
@@ -232,37 +243,31 @@ const EventResultsPage = () => {
       <section className="px-4 sm:px-6 lg:px-8 py-4 pb-2">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3 flex-wrap">
-            <select
+            <Select
               value={genderFilter}
               onChange={(e) => setGenderFilter(e.target.value as 'all' | 'men' | 'women')}
               aria-label="Filter by gender"
-              className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm"
             >
               <option value="men">Men</option>
               <option value="women">Women</option>
-            </select>
+            </Select>
 
             {/* Athlete Filter - only show on Athlete Stats tab */}
             {activeTab === 'athlete-stats' && (
-              <select
-                value={selectedAthleteId || ''}
-                onChange={(e) => setSelectedAthleteId(Number(e.target.value))}
+              <SearchableSelect
+                options={
+                  athleteListData?.athletes?.map((athlete) => ({
+                    value: athlete.athlete_id,
+                    label: `${athlete.overall_position}. ${athlete.name} (${athlete.country_code})`,
+                  })) || []
+                }
+                value={selectedAthleteId}
+                onChange={(val) => setSelectedAthleteId(val as number | null)}
+                placeholder={athleteListLoading ? 'Loading athletes...' : 'Search athletes...'}
                 aria-label="Select athlete"
-                className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm"
                 disabled={athleteListLoading || !athleteListData?.athletes.length}
-              >
-                {athleteListLoading ? (
-                  <option>Loading athletes...</option>
-                ) : athleteListData?.athletes && athleteListData.athletes.length > 0 ? (
-                  athleteListData.athletes.map((athlete) => (
-                    <option key={athlete.athlete_id} value={athlete.athlete_id}>
-                      {athlete.overall_position}. {athlete.name} ({athlete.country_code})
-                    </option>
-                  ))
-                ) : (
-                  <option>No athletes found</option>
-                )}
-              </select>
+                className="min-w-[280px]"
+              />
             )}
           </div>
         </div>

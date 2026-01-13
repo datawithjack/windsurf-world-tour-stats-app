@@ -3,6 +3,7 @@ import AthleteDetailPanel from './AthleteDetailPanel';
 import { Trophy } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
+import Select from './ui/Select';
 
 // Helper to get initials from a name
 const getInitials = (fullName: string): string => {
@@ -238,28 +239,26 @@ const AthleteStatsTab = ({ eventId, selectedAthleteId, sex }: AthleteStatsTabPro
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-sm text-gray-400">Filter by:</span>
           {filterOptions.rounds.length > 0 && (
-            <select
+            <Select
               value={roundFilter || ''}
               onChange={(e) => setRoundFilter(e.target.value || null)}
-              className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-3 py-1.5 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
             >
               <option value="">All Rounds</option>
               {filterOptions.rounds.map((round) => (
                 <option key={round} value={round}>{round}</option>
               ))}
-            </select>
+            </Select>
           )}
           {filterOptions.heatNumbers.length > 0 && (
-            <select
+            <Select
               value={heatNumberFilter || ''}
               onChange={(e) => setHeatNumberFilter(e.target.value || null)}
-              className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-3 py-1.5 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
             >
               <option value="">All Heats</option>
               {filterOptions.heatNumbers.map((heatNo) => (
                 <option key={heatNo} value={heatNo}>Heat {heatNo}</option>
               ))}
-            </select>
+            </Select>
           )}
           {(roundFilter || heatNumberFilter) && (
             <button

@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import FeatureCard from './FeatureCard';
 import StatsSummaryCards from './StatsSummaryCards';
 import EventStatsChart from './EventStatsChart';
+import Select from './ui/Select';
+import EmptyState from './ui/EmptyState';
 import type { EventStatsResponse } from '../types';
 
 // Show More button for tables - increments visible rows
@@ -28,35 +30,6 @@ const ShowMoreButton = ({
     </button>
   );
 };
-
-// Filter dropdown component
-const FilterDropdown = ({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: string[];
-  onChange: (v: string) => void;
-}) => (
-  <div className="flex items-center gap-2">
-    <span className="text-xs text-gray-400">{label}:</span>
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-2 py-1 rounded text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
-    >
-      <option value="">All</option>
-      {options.map((opt) => (
-        <option key={opt} value={opt}>
-          {opt}
-        </option>
-      ))}
-    </select>
-  </div>
-);
 
 interface TransformedStatsData {
   summaryCards: {
@@ -182,11 +155,12 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
 
   if (!statsData) {
     return (
-      <div className="text-center py-12">
-        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-12">
-          <h3 className="text-xl font-semibold text-gray-400 mb-2">No Stats Available</h3>
-          <p className="text-gray-500">Event statistics are not available for this event.</p>
-        </div>
+      <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg">
+        <EmptyState
+          variant="no-data"
+          title="No Stats Available"
+          description="Event statistics are not available for this event."
+        />
       </div>
     );
   }
@@ -312,28 +286,26 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
       {(uniqueRounds.length > 0 || uniqueHeats.length > 0) && (
         <div className="flex flex-wrap items-center gap-3">
           {uniqueRounds.length > 0 && (
-            <select
+            <Select
               value={roundFilter}
               onChange={(e) => setRoundFilter(e.target.value)}
-              className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm"
             >
               <option value="">All Rounds</option>
               {uniqueRounds.map((round) => (
                 <option key={round} value={round}>{round}</option>
               ))}
-            </select>
+            </Select>
           )}
           {uniqueHeats.length > 0 && (
-            <select
+            <Select
               value={heatFilter}
               onChange={(e) => setHeatFilter(e.target.value)}
-              className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm"
             >
               <option value="">All Heats</option>
               {uniqueHeats.map((heat) => (
                 <option key={heat} value={heat}>Heat {heat}</option>
               ))}
-            </select>
+            </Select>
           )}
           {(roundFilter || heatFilter) && (
             <button
@@ -410,9 +382,11 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
                 />
               </>
             ) : (
-              <div className="text-gray-400 text-center py-12">
-                <p className="text-sm text-gray-500">{(roundFilter || heatFilter) ? 'No results match the current filters' : 'Heat scores data not available from API'}</p>
-              </div>
+              <EmptyState
+                variant={(roundFilter || heatFilter) ? 'filtered' : 'no-data'}
+                title={(roundFilter || heatFilter) ? 'No Matches Found' : 'No Heat Scores'}
+                description={(roundFilter || heatFilter) ? 'Try adjusting your filters.' : 'Heat scores data not available.'}
+              />
             )}
           </FeatureCard>
         </div>
@@ -472,9 +446,11 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
                   />
                 </>
               ) : (
-                <div className="text-gray-400 text-center py-12">
-                  <p className="text-sm text-gray-500">{(roundFilter || heatFilter) ? 'No results match the current filters' : 'Jump scores data not available'}</p>
-                </div>
+                <EmptyState
+                  variant={(roundFilter || heatFilter) ? 'filtered' : 'no-data'}
+                  title={(roundFilter || heatFilter) ? 'No Matches Found' : 'No Jump Scores'}
+                  description={(roundFilter || heatFilter) ? 'Try adjusting your filters.' : 'Jump scores data not available.'}
+                />
               )}
             </FeatureCard>
           )}
@@ -528,9 +504,11 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
                   />
                 </>
               ) : (
-                <div className="text-gray-400 text-center py-12">
-                  <p className="text-sm text-gray-500">{(roundFilter || heatFilter) ? 'No results match the current filters' : 'Wave scores data not available'}</p>
-                </div>
+                <EmptyState
+                  variant={(roundFilter || heatFilter) ? 'filtered' : 'no-data'}
+                  title={(roundFilter || heatFilter) ? 'No Matches Found' : 'No Wave Scores'}
+                  description={(roundFilter || heatFilter) ? 'Try adjusting your filters.' : 'Wave scores data not available.'}
+                />
               )}
             </FeatureCard>
           )}

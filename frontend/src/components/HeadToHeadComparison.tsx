@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiService } from '../services/api';
@@ -6,6 +6,7 @@ import FeatureCard from './FeatureCard';
 import H2HStatBar from './H2HStatBar';
 import H2HAthleteCard from './H2HAthleteCard';
 import H2HOverviewCard from './H2HOverviewCard';
+import SearchableSelect from './ui/SearchableSelect';
 
 interface HeadToHeadComparisonProps {
   eventId: number;
@@ -56,6 +57,25 @@ const HeadToHeadComparison = ({ eventId, gender }: HeadToHeadComparisonProps) =>
   const athlete2 = headToHeadData?.athlete2;
   const comparison = headToHeadData?.comparison;
 
+  // Create options for athlete selects, excluding already selected athlete
+  const athlete1Options = useMemo(() =>
+    athletes.map((athlete) => ({
+      value: athlete.athlete_id,
+      label: `${athlete.name} (${athlete.country_code})`,
+      disabled: athlete.athlete_id === athlete2Id,
+    })),
+    [athletes, athlete2Id]
+  );
+
+  const athlete2Options = useMemo(() =>
+    athletes.map((athlete) => ({
+      value: athlete.athlete_id,
+      label: `${athlete.name} (${athlete.country_code})`,
+      disabled: athlete.athlete_id === athlete1Id,
+    })),
+    [athletes, athlete1Id]
+  );
+
   return (
     <div className="space-y-6">
       {/* Athlete Selection */}
@@ -65,43 +85,25 @@ const HeadToHeadComparison = ({ eventId, gender }: HeadToHeadComparisonProps) =>
         transition={{ duration: 0.4 }}
         className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3"
       >
-        <select
-          value={athlete1Id || ''}
-          onChange={(e) => setAthlete1Id(e.target.value ? Number(e.target.value) : null)}
+        <SearchableSelect
+          options={athlete1Options}
+          value={athlete1Id}
+          onChange={(val) => setAthlete1Id(val as number | null)}
+          placeholder="Select first athlete..."
           aria-label="Select first athlete to compare"
-          className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-4 py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm sm:min-w-[250px] flex-1"
           disabled={athleteListLoading}
-        >
-          <option value="">Select first athlete</option>
-          {athletes.map((athlete) => (
-            <option
-              key={athlete.athlete_id}
-              value={athlete.athlete_id}
-              disabled={athlete.athlete_id === athlete2Id}
-            >
-              {athlete.name} ({athlete.country_code})
-            </option>
-          ))}
-        </select>
+          className="sm:min-w-[250px] flex-1"
+        />
 
-        <select
-          value={athlete2Id || ''}
-          onChange={(e) => setAthlete2Id(e.target.value ? Number(e.target.value) : null)}
+        <SearchableSelect
+          options={athlete2Options}
+          value={athlete2Id}
+          onChange={(val) => setAthlete2Id(val as number | null)}
+          placeholder="Select second athlete..."
           aria-label="Select second athlete to compare"
-          className="bg-slate-800/60 border border-slate-700/50 text-gray-300 px-4 py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm sm:min-w-[250px] flex-1"
           disabled={athleteListLoading}
-        >
-          <option value="">Select second athlete</option>
-          {athletes.map((athlete) => (
-            <option
-              key={athlete.athlete_id}
-              value={athlete.athlete_id}
-              disabled={athlete.athlete_id === athlete1Id}
-            >
-              {athlete.name} ({athlete.country_code})
-            </option>
-          ))}
-        </select>
+          className="sm:min-w-[250px] flex-1"
+        />
       </motion.div>
 
       {/* Comparison Content */}

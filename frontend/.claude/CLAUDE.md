@@ -21,6 +21,10 @@
 ```
 frontend/src/
 ├── components/         # Reusable UI components
+│   ├── ui/                 # Base UI primitives (use these!)
+│   │   ├── Select.tsx          # Styled select dropdown
+│   │   ├── SearchableSelect.tsx # Filter-as-you-type dropdown
+│   │   └── EmptyState.tsx      # Consistent empty state pattern
 │   ├── PageLayout.tsx      # Main layout wrapper
 │   ├── PageHero.tsx        # Hero sections
 │   ├── Section.tsx         # Content sections
@@ -79,6 +83,63 @@ Secondary:     teal-400 (#2dd4bf)
 Text Primary:  white
 Text Secondary: gray-400
 Borders:       slate-700/50
+```
+
+---
+
+## UI Components (`components/ui/`)
+
+**Always use these reusable components instead of inline styling.**
+
+### Select
+
+Styled dropdown with consistent design system styling.
+
+```tsx
+import Select from './ui/Select';
+
+// Default size (px-4 py-2, text-sm)
+<Select value={filter} onChange={(e) => setFilter(e.target.value)}>
+  <option value="all">All</option>
+  <option value="option1">Option 1</option>
+</Select>
+
+// Small size (px-2 py-1, text-xs)
+<Select size="sm" value={filter} onChange={(e) => setFilter(e.target.value)}>
+  <option value="all">All</option>
+</Select>
+```
+
+### SearchableSelect
+
+Filter-as-you-type dropdown for large lists (e.g., 359 athletes).
+
+```tsx
+import SearchableSelect from './ui/SearchableSelect';
+
+<SearchableSelect
+  options={athletes.map(a => ({ value: a.id, label: a.name }))}
+  value={selectedId}
+  onChange={setSelectedId}
+  placeholder="Search athletes..."
+/>
+```
+
+### EmptyState
+
+Consistent empty/no-data states across the app.
+
+```tsx
+import EmptyState from './ui/EmptyState';
+
+// No results variant
+<EmptyState variant="no-results" title="No Results" description="Try adjusting your filters." />
+
+// No selection variant
+<EmptyState variant="no-selection" title="Select an Athlete" />
+
+// Error variant
+<EmptyState variant="error" title="Something went wrong" />
 ```
 
 ---
@@ -262,7 +323,7 @@ Set in Vercel dashboard for production.
 ### Add filtering to a page
 1. Add state: `const [filter, setFilter] = useState('default')`
 2. Add to query key: `queryKey: ['data', eventId, filter]`
-3. Use select dropdown with Tailwind styling
+3. Use the `Select` component from `components/ui/Select`
 
 ### Style a new table
 1. Use existing pattern from `ResultsTable.tsx` or `TopScoresTable.tsx`
