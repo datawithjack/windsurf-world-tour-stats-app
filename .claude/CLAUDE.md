@@ -6,6 +6,8 @@ A full-stack web application for professional windsurf wave competition statisti
 
 **Author Background**: Data analyst, not a web developer. Prioritize clear explanations and avoid over-engineering.
 
+**Feedback Style**: Be brutally honest when reviewing code or giving opinions. No flattery, no inflated scores. The goal is to ship the best possible product, not to feel good about mediocre work. Point out every flaw, suggest fixes, and hold work to a high standard.
+
 ---
 
 ## Monorepo Structure
@@ -71,6 +73,19 @@ LiveHeats ────┘
 4. **Run verification and iterate** until it passes
 
 This ensures every change can be proven to work.
+
+---
+
+## Verification Commands
+
+**IMPORTANT:** Always use the full build command for TypeScript verification, not just `tsc --noEmit`.
+
+| Task | Command | Why |
+|------|---------|-----|
+| **Frontend TypeScript** | `cd frontend && npm run build` | Uses Vite's strict `verbatimModuleSyntax` setting |
+| **Backend Python** | `cd backend && python -m py_compile app/main.py` | Basic syntax check |
+
+**Do NOT use:** `tsc --noEmit` alone - it doesn't catch all errors that the Vite build will catch.
 
 ---
 
