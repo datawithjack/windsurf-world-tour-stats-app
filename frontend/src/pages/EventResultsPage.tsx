@@ -1,6 +1,6 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Star, User, Loader2, Info, X } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
 import FeatureCard from '../components/FeatureCard';
@@ -12,10 +12,25 @@ import Select from '../components/ui/Select';
 import SearchableSelect from '../components/ui/SearchableSelect';
 import EmptyState from '../components/ui/EmptyState';
 
+type TabType = 'results' | 'event-stats' | 'athlete-stats' | 'head-to-head';
+type GenderType = 'all' | 'men' | 'women';
+
+const validTabs: TabType[] = ['results', 'event-stats', 'athlete-stats', 'head-to-head'];
+const validGenders: GenderType[] = ['men', 'women'];
+
 const EventResultsPage = () => {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState<'results' | 'event-stats' | 'athlete-stats' | 'head-to-head'>('results');
-  const [genderFilter, setGenderFilter] = useState<'all' | 'men' | 'women'>('women');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Initialize from URL params
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    const tab = searchParams.get('tab') as TabType;
+    return validTabs.includes(tab) ? tab : 'results';
+  });
+  const [genderFilter, setGenderFilter] = useState<GenderType>(() => {
+    const gender = searchParams.get('gender') as GenderType;
+    return validGenders.includes(gender) ? gender : 'women';
+  });
   const [selectedAthleteId, setSelectedAthleteId] = useState<number | null>(null);
   const [defaultSet, setDefaultSet] = useState(false);
   const [genderSwitchNotice, setGenderSwitchNotice] = useState(false);
@@ -23,6 +38,18 @@ const EventResultsPage = () => {
   // Refs for tab navigation scrolling
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const tabContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Update URL when tab or gender changes
+  const updateUrlParams = useCallback(() => {
+    const params = new URLSearchParams();
+    if (activeTab !== 'results') params.set('tab', activeTab);
+    if (genderFilter !== 'women') params.set('gender', genderFilter);
+    setSearchParams(params, { replace: true });
+  }, [activeTab, genderFilter, setSearchParams]);
+
+  useEffect(() => {
+    updateUrlParams();
+  }, [updateUrlParams]);
 
   const { data: event, isLoading, error, refetch } = useQuery({
     queryKey: ['event', id],

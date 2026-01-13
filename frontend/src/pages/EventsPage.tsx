@@ -2,17 +2,26 @@ import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
 import { Calendar, MapPin, Star, User, LayoutGrid, List } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import Select from '../components/ui/Select';
 import EmptyState from '../components/ui/EmptyState';
 
 const EventsPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const prefersReducedMotion = useReducedMotion();
-  const [yearFilter, setYearFilter] = useState<string>('all');
-  const [eventTypeFilter, setEventTypeFilter] = useState<string>('wave');
-  const [statusFilter, setStatusFilter] = useState<string>('completed');
+
+  // Initialize filters from URL params or defaults
+  const [yearFilter, setYearFilter] = useState<string>(() =>
+    searchParams.get('year') || 'all'
+  );
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>(() =>
+    searchParams.get('type') || 'wave'
+  );
+  const [statusFilter, setStatusFilter] = useState<string>(() =>
+    searchParams.get('status') || 'completed'
+  );
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     const saved = localStorage.getItem('eventsViewMode');
     return saved === 'list' ? 'list' : 'grid';
@@ -22,6 +31,19 @@ const EventsPage = () => {
   useEffect(() => {
     localStorage.setItem('eventsViewMode', viewMode);
   }, [viewMode]);
+
+  // Update URL when filters change
+  const updateUrlParams = useCallback(() => {
+    const params = new URLSearchParams();
+    if (yearFilter !== 'all') params.set('year', yearFilter);
+    if (eventTypeFilter !== 'wave') params.set('type', eventTypeFilter);
+    if (statusFilter !== 'completed') params.set('status', statusFilter);
+    setSearchParams(params, { replace: true });
+  }, [yearFilter, eventTypeFilter, statusFilter, setSearchParams]);
+
+  useEffect(() => {
+    updateUrlParams();
+  }, [updateUrlParams]);
 
   const { data: eventsData, isLoading, error, refetch } = useQuery({
     queryKey: ['events', eventTypeFilter],
