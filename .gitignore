@@ -147,3 +147,8 @@ geckodriver.exe
 !.claude/CLAUDE.md
 !README.md
 !DEPLOYMENT.md
+
+# Claude Code temp files
+tmpclaude-*
+**/tmpclaude-*
+nul
