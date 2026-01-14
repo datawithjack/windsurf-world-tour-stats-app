@@ -114,9 +114,10 @@ class DatabaseManager:
 
         except Error as e:
             error_msg = f"Failed to initialize database connection pool: {e}"
-            logger.error(error_msg)
+            logger.error(error_msg, exc_info=True)
             self._initialization_error = str(e)
-            self._pool_initialized = True  # Mark as attempted
+            # Don't mark as initialized - allow retry on next request
+            self._pool_initialized = False
             raise
 
     @contextmanager

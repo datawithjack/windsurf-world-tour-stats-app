@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .config import settings
-from .database import check_database_health
+from .database import check_database_health, db_manager
 from .models import HealthResponse
 from .routes import events, athletes, stats, head_to_head
 
@@ -72,12 +72,39 @@ async def startup_event():
     """
     Run on application startup
 
-    Logs configuration. Database initialized lazily on first request.
+    Validates production configuration and logs settings.
+    Database initialized lazily on first request.
     """
     logger.info(f"Starting {settings.API_TITLE} v{settings.API_VERSION}")
     logger.info(f"Environment: {'PRODUCTION' if settings.is_production else 'DEVELOPMENT'}")
-    logger.info(f"Database: {settings.database_url}")
+    logger.info(f"Database: {settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}")
     logger.info("Database will be initialized on first request (lazy loading)")
+
+    # Production security validation
+    if settings.is_production:
+        if "*" in settings.CORS_ORIGINS:
+            logger.error("SECURITY ERROR: CORS_ORIGINS contains '*' in production!")
+            raise RuntimeError("CORS_ORIGINS must be restricted in production - remove '*' from allowed origins")
+        logger.info(f"Production mode: CORS restricted to {settings.CORS_ORIGINS}")
+
+    # Verify required database views exist (lazy - only logs warning, doesn't block startup)
+    try:
+        required_views = ['EVENT_STATS_VIEW', 'EVENT_INFO_VIEW', 'ATHLETE_SUMMARY_VIEW', 'ATHLETE_RESULTS_VIEW']
+        missing_views = []
+        for view in required_views:
+            try:
+                result = db_manager.execute_query(f"SELECT 1 FROM {view} LIMIT 1")
+                if result is not None:
+                    logger.info(f"  View verified: {view}")
+            except Exception:
+                missing_views.append(view)
+
+        if missing_views:
+            logger.warning(f"MISSING VIEWS: {missing_views} - Some endpoints may fail!")
+        else:
+            logger.info("All required database views verified")
+    except Exception as e:
+        logger.warning(f"Could not verify database views (DB may not be ready): {e}")
 
 
 @app.on_event("shutdown")

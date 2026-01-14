@@ -128,5 +128,5 @@ if __name__ != "__main__":
     logger = logging.getLogger(__name__)
     logger.info(f"API Configuration Loaded:")
     logger.info(f"  Environment: {'PRODUCTION' if settings.is_production else 'DEVELOPMENT'}")
-    logger.info(f"  Database: {settings.database_url}")
+    logger.info(f"  Database: {settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}")
     logger.info(f"  CORS Enabled: {settings.CORS_ENABLED}")

@@ -10,15 +10,27 @@ Commit and push to current branch (without merging to main).
    ```
    If no changes, tell the user and stop.
 
-2. **Show diff and generate commit message**
+2. **Run tests** (frontend and backend in parallel)
    ```bash
-   git diff
-   git diff --cached
+   cd frontend && npm test
+   cd backend && pytest
+   ```
+   If tests fail, stop and report the failures.
+
+3. **Build frontend** (verify TypeScript compiles)
+   ```bash
+   cd frontend && npm run build
+   ```
+   If build fails, stop and report the errors.
+
+4. **Show diff and generate commit message**
+   ```bash
+   git diff --stat
    git log --oneline -5
    ```
    Generate a clear, concise commit message based on the changes.
 
-3. **Commit changes**
+5. **Commit changes**
    ```bash
    git add -A
    git commit -m "Your generated message
@@ -26,7 +38,7 @@ Commit and push to current branch (without merging to main).
    Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
    ```
 
-4. **Push to current branch**
+6. **Push to current branch**
    ```bash
    git push origin HEAD
    ```
@@ -35,10 +47,13 @@ Commit and push to current branch (without merging to main).
    git push -u origin HEAD
    ```
 
-5. **Report success**
-   Tell the user what was committed and pushed.
+7. **Report success**
+   - Tell the user what was committed and pushed
+   - Remind them Vercel will auto-deploy if pushed to main
 
 ## Notes
 
+- Tests and build must pass before committing
 - Does NOT merge to main
 - Use `/ship` to commit, push, AND merge to main
+- Vercel auto-deploys when code is pushed to `main` branch

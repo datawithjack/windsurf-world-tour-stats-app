@@ -155,10 +155,10 @@ async def list_events(
         return EventsResponse(events=events, pagination=pagination)
 
     except Error as e:
-        logger.error(f"Database error in list_events: {e}")
+        logger.error(f"Database error in list_events: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Database query failed")
     except Exception as e:
-        logger.error(f"Unexpected error in list_events: {e}")
+        logger.error(f"Unexpected error in list_events: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -212,10 +212,10 @@ async def get_event(
     except HTTPException:
         raise
     except Error as e:
-        logger.error(f"Database error in get_event: {e}")
+        logger.error(f"Database error in get_event: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Database query failed")
     except Exception as e:
-        logger.error(f"Unexpected error in get_event: {e}")
+        logger.error(f"Unexpected error in get_event: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -274,6 +274,16 @@ async def get_event_stats(
         event_result = db.execute_query(event_query, (event_id,), fetch_one=True)
 
         if not event_result:
+            # Check if event exists at all but just not in the view
+            event_exists_query = """
+                SELECT id, event_name FROM PWA_IWT_EVENTS WHERE id = %s
+            """
+            event_check = db.execute_query(event_exists_query, (event_id,), fetch_one=True)
+            if event_check:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Event '{event_check['event_name']}' exists but has no {sex} division data"
+                )
             raise HTTPException(
                 status_code=404,
                 detail=f"Event with id {event_id} not found"
@@ -714,10 +724,10 @@ async def get_event_stats(
     except HTTPException:
         raise
     except Error as e:
-        logger.error(f"Database error in get_event_stats: {e}")
+        logger.error(f"Database error in get_event_stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Database query failed")
     except Exception as e:
-        logger.error(f"Unexpected error in get_event_stats: {e}")
+        logger.error(f"Unexpected error in get_event_stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -785,8 +795,12 @@ async def list_event_athletes(
                 a.id as athlete_id,
                 a.primary_name as name,
                 a.nationality as country,
-                a.nationality as country_code,
-                CAST(r.place AS UNSIGNED) as overall_position,
+                COALESCE(a.country_code, e.country_code) as country_code,
+                CASE
+                    WHEN r.place REGEXP '^[0-9]+$' THEN CAST(r.place AS UNSIGNED)
+                    ELSE 999
+                END as overall_position,
+                r.place as overall_position_raw,
                 COALESCE(a.pwa_sail_number, r.sail_number) as sail_number,
                 COALESCE(a.liveheats_image_url, a.pwa_profile_url) as profile_image,
                 COUNT(DISTINCT hr.heat_id) as total_heats,
@@ -801,7 +815,7 @@ async def list_event_athletes(
                 JOIN ATHLETE_SOURCE_IDS asi2 ON hr.source = asi2.source AND hr.athlete_id = asi2.source_id
             ) hr ON hr.pwa_event_id = r.event_id AND hr.unified_athlete_id = a.id
             WHERE e.id = %s AND r.sex = %s
-            GROUP BY a.id, a.primary_name, a.nationality, sail_number, profile_image, overall_position
+            GROUP BY a.id, a.primary_name, a.nationality, a.country_code, e.country_code, sail_number, profile_image, overall_position, overall_position_raw
             ORDER BY overall_position ASC
         """
 
@@ -840,10 +854,10 @@ async def list_event_athletes(
     except HTTPException:
         raise
     except Error as e:
-        logger.error(f"Database error in list_event_athletes: {e}")
+        logger.error(f"Database error in list_event_athletes: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Database query failed")
     except Exception as e:
-        logger.error(f"Unexpected error in list_event_athletes: {e}")
+        logger.error(f"Unexpected error in list_event_athletes: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -918,11 +932,15 @@ async def get_athlete_event_stats(
                     a.id as athlete_id,
                     a.primary_name as name,
                     a.nationality as country,
-                    a.nationality as country_code,
+                    COALESCE(a.country_code, e.country_code) as country_code,
                     COALESCE(a.liveheats_image_url, a.pwa_profile_url) as profile_image,
                     a.pwa_sponsors as sponsors,
                     COALESCE(a.pwa_sail_number, r.sail_number) as sail_number,
-                    CAST(r.place AS UNSIGNED) as overall_position,
+                    CASE
+                        WHEN r.place REGEXP '^[0-9]+$' THEN CAST(r.place AS UNSIGNED)
+                        ELSE 999
+                    END as overall_position,
+                    r.place as overall_position_raw,
                     r.sex
                 FROM ATHLETES a
                 JOIN ATHLETE_SOURCE_IDS asi ON a.id = asi.athlete_id
@@ -939,11 +957,15 @@ async def get_athlete_event_stats(
                     a.id as athlete_id,
                     a.primary_name as name,
                     a.nationality as country,
-                    a.nationality as country_code,
+                    COALESCE(a.country_code, e.country_code) as country_code,
                     COALESCE(a.liveheats_image_url, a.pwa_profile_url) as profile_image,
                     a.pwa_sponsors as sponsors,
                     COALESCE(a.pwa_sail_number, r.sail_number) as sail_number,
-                    CAST(r.place AS UNSIGNED) as overall_position,
+                    CASE
+                        WHEN r.place REGEXP '^[0-9]+$' THEN CAST(r.place AS UNSIGNED)
+                        ELSE 999
+                    END as overall_position,
+                    r.place as overall_position_raw,
                     r.sex
                 FROM ATHLETES a
                 JOIN ATHLETE_SOURCE_IDS asi ON a.id = asi.athlete_id
@@ -1198,8 +1220,8 @@ async def get_athlete_event_stats(
     except HTTPException:
         raise
     except Error as e:
-        logger.error(f"Database error in get_athlete_event_stats: {e}")
+        logger.error(f"Database error in get_athlete_event_stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Database query failed")
     except Exception as e:
-        logger.error(f"Unexpected error in get_athlete_event_stats: {e}")
+        logger.error(f"Unexpected error in get_athlete_event_stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")

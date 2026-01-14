@@ -63,13 +63,13 @@ async def get_site_stats(
         )
 
     except Error as e:
-        logger.error(f"Database error fetching site statistics: {e}")
+        logger.error(f"Database error fetching site statistics: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Failed to retrieve site statistics from database"
         )
     except Exception as e:
-        logger.error(f"Unexpected error fetching site statistics: {e}")
+        logger.error(f"Unexpected error fetching site statistics: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="An unexpected error occurred while retrieving site statistics"

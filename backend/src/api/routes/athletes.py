@@ -173,10 +173,10 @@ async def list_athlete_summaries(
     except HTTPException:
         raise
     except Error as e:
-        logger.error(f"Database error in list_athlete_summaries: {e}")
+        logger.error(f"Database error in list_athlete_summaries: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Database query failed")
     except Exception as e:
-        logger.error(f"Unexpected error in list_athlete_summaries: {e}")
+        logger.error(f"Unexpected error in list_athlete_summaries: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -269,7 +269,7 @@ async def list_athlete_results(
             params.append(sex)
 
         if podium_only:
-            where_conditions.append("CAST(placement AS UNSIGNED) <= 3")
+            where_conditions.append("placement REGEXP '^[0-9]+$' AND CAST(placement AS UNSIGNED) <= 3")
 
         where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
 
@@ -308,7 +308,8 @@ async def list_athlete_results(
                 result_scraped_at
             FROM ATHLETE_RESULTS_VIEW
             WHERE {where_clause}
-            ORDER BY event_year DESC, event_id, CAST(placement AS UNSIGNED)
+            ORDER BY event_year DESC, event_id,
+                CASE WHEN placement REGEXP '^[0-9]+$' THEN CAST(placement AS UNSIGNED) ELSE 999 END
             LIMIT %s OFFSET %s
         """
 
@@ -332,10 +333,10 @@ async def list_athlete_results(
     except HTTPException:
         raise
     except Error as e:
-        logger.error(f"Database error in list_athlete_results: {e}")
+        logger.error(f"Database error in list_athlete_results: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Database query failed")
     except Exception as e:
-        logger.error(f"Unexpected error in list_athlete_results: {e}")
+        logger.error(f"Unexpected error in list_athlete_results: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -388,8 +389,8 @@ async def get_athlete_summary(
     except HTTPException:
         raise
     except Error as e:
-        logger.error(f"Database error in get_athlete_summary: {e}")
+        logger.error(f"Database error in get_athlete_summary: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Database query failed")
     except Exception as e:
-        logger.error(f"Unexpected error in get_athlete_summary: {e}")
+        logger.error(f"Unexpected error in get_athlete_summary: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")

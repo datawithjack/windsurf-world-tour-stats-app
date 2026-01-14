@@ -129,7 +129,10 @@ async def get_head_to_head(
                     a.id as athlete_id,
                     a.primary_name as name,
                     a.nationality,
-                    CAST(r.place AS UNSIGNED) as place,
+                    CASE
+                        WHEN r.place REGEXP '^[0-9]+$' THEN CAST(r.place AS UNSIGNED)
+                        ELSE 999
+                    END as place,
                     COALESCE(a.liveheats_image_url, a.pwa_profile_url) as profile_image
                 FROM ATHLETES a
                 JOIN ATHLETE_SOURCE_IDS asi ON a.id = asi.athlete_id
@@ -241,8 +244,8 @@ async def get_head_to_head(
     except HTTPException:
         raise
     except Error as e:
-        logger.error(f"Database error in get_head_to_head: {e}")
+        logger.error(f"Database error in get_head_to_head: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Database query failed")
     except Exception as e:
-        logger.error(f"Unexpected error in get_head_to_head: {e}")
+        logger.error(f"Unexpected error in get_head_to_head: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")

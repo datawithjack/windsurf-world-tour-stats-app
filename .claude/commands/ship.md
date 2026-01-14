@@ -10,20 +10,27 @@ Commit, push, and merge to main in one command.
    ```
    If no changes, tell the user and stop.
 
-2. **Run tests** (if they exist)
+2. **Run tests** (frontend and backend in parallel)
    ```bash
-   cd frontend && npm test -- --run 2>/dev/null || echo "No tests or tests skipped"
+   cd frontend && npm test
+   cd backend && pytest
    ```
    If tests fail, stop and report the failures. Do NOT proceed with broken tests.
 
-3. **Show diff and generate commit message**
+3. **Build frontend** (verify TypeScript compiles)
    ```bash
-   git diff
-   git diff --cached
+   cd frontend && npm run build
+   ```
+   If build fails, stop and report the errors.
+
+4. **Show diff and generate commit message**
+   ```bash
+   git diff --stat
+   git log --oneline -5
    ```
    Generate a clear, concise commit message based on the changes.
 
-4. **Commit changes**
+5. **Commit changes**
    ```bash
    git add -A
    git commit -m "Your generated message
@@ -31,12 +38,12 @@ Commit, push, and merge to main in one command.
    Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
    ```
 
-5. **Push to current branch**
+6. **Push to current branch**
    ```bash
    git push origin HEAD
    ```
 
-6. **Merge to main** (if not already on main)
+7. **Merge to main** (if not already on main)
    ```bash
    git checkout main
    git pull origin main
@@ -45,19 +52,21 @@ Commit, push, and merge to main in one command.
    git checkout <branch-name>
    ```
 
-7. **Report success**
+8. **Report success**
    Tell the user:
    - What was committed
    - That it's now on main
-   - Remind them Vercel will auto-deploy
+   - Vercel will auto-deploy
 
 ## Safety Checks
 
 - STOP if tests fail
+- STOP if build fails
 - STOP if there are merge conflicts (ask user to resolve)
 - STOP if push fails (ask user to pull first)
 
 ## Notes
 
+- Tests and build must pass before shipping
 - This deploys to production via Vercel auto-deploy
 - Use `/commit-push` if you want to push without merging to main
