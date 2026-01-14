@@ -171,7 +171,7 @@ const HeadToHeadComparison = ({ eventId, gender }: HeadToHeadComparisonProps) =>
             </div>
 
             {/* Stats Comparison Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               <H2HOverviewCard
                 athlete1Name={athlete1.name}
                 athlete2Name={athlete2.name}

@@ -52,16 +52,16 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Best Heat Score */}
-        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6">
+        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4 sm:p-6">
           <h3 className="text-base font-medium text-white mb-2 font-inter">
             Best Heat Score
           </h3>
           {summary_stats.best_heat_score && summary_stats.best_heat_score.score != null ? (
             <>
-              <p className="text-5xl font-bold text-white mb-2">
-                {summary_stats.best_heat_score.score.toFixed(2)} <span className="text-2xl text-gray-400">pts</span>
+              <p className="text-3xl sm:text-5xl font-bold text-white mb-2">
+                {summary_stats.best_heat_score.score.toFixed(2)} <span className="text-xl sm:text-2xl text-gray-400">pts</span>
               </p>
               <p className="text-xs text-gray-400">{summary_stats.best_heat_score.round_name}</p>
               {summary_stats.best_heat_score.opponents && Array.isArray(summary_stats.best_heat_score.opponents) && summary_stats.best_heat_score.opponents.length > 0 && (
@@ -74,14 +74,14 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
         </div>
 
         {/* Best Jump Score */}
-        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6">
+        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4 sm:p-6">
           <h3 className="text-base font-medium text-white mb-2 font-inter">
             Best Jump Score
           </h3>
           {summary_stats.best_jump_score && summary_stats.best_jump_score.score != null ? (
             <>
-              <p className="text-5xl font-bold text-white mb-2">
-                {summary_stats.best_jump_score.score.toFixed(2)} <span className="text-2xl text-gray-400">pts</span>
+              <p className="text-3xl sm:text-5xl font-bold text-white mb-2">
+                {summary_stats.best_jump_score.score.toFixed(2)} <span className="text-xl sm:text-2xl text-gray-400">pts</span>
               </p>
               <p className="text-xs text-gray-400">{summary_stats.best_jump_score.round_name}</p>
               {summary_stats.best_jump_score.opponents && Array.isArray(summary_stats.best_jump_score.opponents) && summary_stats.best_jump_score.opponents.length > 0 && (
@@ -95,14 +95,14 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
         </div>
 
         {/* Best Wave Score */}
-        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6">
+        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4 sm:p-6">
           <h3 className="text-base font-medium text-white mb-2 font-inter">
             Best Wave Score
           </h3>
           {summary_stats.best_wave_score && summary_stats.best_wave_score.score != null ? (
             <>
-              <p className="text-5xl font-bold text-white mb-2">
-                {summary_stats.best_wave_score.score.toFixed(2)} <span className="text-2xl text-gray-400">pts</span>
+              <p className="text-3xl sm:text-5xl font-bold text-white mb-2">
+                {summary_stats.best_wave_score.score.toFixed(2)} <span className="text-xl sm:text-2xl text-gray-400">pts</span>
               </p>
               <p className="text-xs text-gray-400">{summary_stats.best_wave_score.round_name}</p>
               {summary_stats.best_wave_score.opponents && Array.isArray(summary_stats.best_wave_score.opponents) && summary_stats.best_wave_score.opponents.length > 0 && (
@@ -116,7 +116,7 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Best and Average Score by Type */}
         <FeatureCard title="Best and Average Counting Score by Type" isLoading={false}>
           <EventStatsChart data={chartData} />
@@ -133,7 +133,7 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
       </div>
 
       {/* Score Tables Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Jump Scores Table */}
         <FeatureCard title="Jump Scores" isLoading={false}>
           <div className="overflow-x-auto">

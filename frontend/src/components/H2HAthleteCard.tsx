@@ -26,12 +26,12 @@ const H2HAthleteCard = ({
         <img
           src={profileImage}
           alt={name}
-          className={`w-28 h-28 rounded-lg object-cover border-4 ${borderColor}`}
+          className={`w-20 h-20 sm:w-28 sm:h-28 rounded-lg object-cover border-4 ${borderColor}`}
           onError={onImageError}
         />
       ) : (
-        <div className={`w-28 h-28 bg-slate-700/50 rounded-lg flex items-center justify-center border-4 ${borderColor}`}>
-          <User className={textColor} size={44} />
+        <div className={`w-20 h-20 sm:w-28 sm:h-28 bg-slate-700/50 rounded-lg flex items-center justify-center border-4 ${borderColor}`}>
+          <User className={textColor} size={32} />
         </div>
       )}
       <div>

@@ -24,7 +24,7 @@ const LandingPage = () => {
       <section className="relative px-4 sm:px-6 lg:px-8 py-20 md:py-32">
         <div className="max-w-7xl mx-auto">
           <div className="max-w-4xl">
-            <h1 className="text-6xl md:text-8xl font-bold mb-6 tracking-tight leading-none">
+            <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold mb-6 tracking-tight leading-none">
               WINDSURF WORLD TOUR STATS
             </h1>
             <p className="text-base md:text-lg text-gray-300 mb-8">

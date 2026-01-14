@@ -205,38 +205,42 @@ const EventResultsPage = () => {
               <h1 className="text-4xl md:text-6xl font-bold mb-2 tracking-tight leading-none uppercase">
                 {event.event_name}
               </h1>
-              <div className="flex items-center gap-3 text-sm md:text-base text-gray-400">
-                <span>{event.country_flag}</span>
-                <span>•</span>
-                <span>{event.event_date}</span>
-                {event.stars && (
-                  <>
-                    <span>•</span>
-                    <div className="flex items-center gap-1">
-                      <Star className="text-yellow-400 fill-yellow-400" size={16} />
-                      <span className="font-semibold">{event.stars}</span>
-                    </div>
-                  </>
-                )}
-                {(event.total_men || event.total_women) && (
-                  <>
-                    <span>•</span>
-                    <div className="flex items-center gap-3">
-                      {event.total_men !== null && event.total_men > 0 && (
-                        <div className="flex items-center gap-1">
-                          <User className="text-blue-400" size={16} />
-                          <span className="font-semibold">{event.total_men}</span>
-                        </div>
-                      )}
-                      {event.total_women !== null && event.total_women > 0 && (
-                        <div className="flex items-center gap-1">
-                          <User className="text-pink-400" size={16} />
-                          <span className="font-semibold">{event.total_women}</span>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-sm md:text-base text-gray-400">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span>{event.country_flag}</span>
+                  <span className="hidden sm:inline">•</span>
+                  <span>{event.event_date}</span>
+                </div>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  {event.stars && (
+                    <>
+                      <span className="hidden sm:inline">•</span>
+                      <div className="flex items-center gap-1">
+                        <Star className="text-yellow-400 fill-yellow-400" size={16} />
+                        <span className="font-semibold">{event.stars}</span>
+                      </div>
+                    </>
+                  )}
+                  {(event.total_men || event.total_women) && (
+                    <>
+                      <span className="hidden sm:inline">•</span>
+                      <div className="flex items-center gap-3">
+                        {event.total_men !== null && event.total_men > 0 && (
+                          <div className="flex items-center gap-1">
+                            <User className="text-blue-400" size={16} />
+                            <span className="font-semibold">{event.total_men}</span>
+                          </div>
+                        )}
+                        {event.total_women !== null && event.total_women > 0 && (
+                          <div className="flex items-center gap-1">
+                            <User className="text-pink-400" size={16} />
+                            <span className="font-semibold">{event.total_women}</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           ) : null}

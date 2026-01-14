@@ -55,24 +55,24 @@ const TopScoresTable = ({
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-700/50">
-                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   #
                 </th>
-                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   Athlete
                 </th>
-                <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                <th className="text-right py-2 px-2 sm:py-3 sm:px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   Score
                 </th>
                 {showMove && (
-                  <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                  <th className="text-right py-2 px-2 sm:py-3 sm:px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden sm:table-cell">
                     Move
                   </th>
                 )}
-                <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                <th className="text-right py-2 px-2 sm:py-3 sm:px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden sm:table-cell">
                   Round
                 </th>
-                <th className="text-right py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                <th className="text-right py-2 px-2 sm:py-3 sm:px-4 text-xs font-semibold text-gray-400 uppercase tracking-wide hidden sm:table-cell">
                   Heat
                 </th>
               </tr>
@@ -83,7 +83,7 @@ const TopScoresTable = ({
                   key={index}
                   className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200"
                 >
-                  <td className="py-3 px-4 text-sm font-semibold">
+                  <td className="py-2 px-2 sm:py-3 sm:px-4 text-sm font-semibold">
                     <span
                       className={
                         index === 0
@@ -98,19 +98,19 @@ const TopScoresTable = ({
                       {index + 1}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-sm text-white">{entry.athlete}</td>
-                  <td className="py-3 px-4 text-sm text-right text-white font-semibold">
+                  <td className="py-2 px-2 sm:py-3 sm:px-4 text-sm text-white">{entry.athlete}</td>
+                  <td className="py-2 px-2 sm:py-3 sm:px-4 text-sm text-right text-white font-semibold">
                     {entry.score.toFixed(2)}
                   </td>
                   {showMove && (
-                    <td className="py-3 px-4 text-sm text-right text-gray-400">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-sm text-right text-gray-400 hidden sm:table-cell">
                       {entry.move}
                     </td>
                   )}
-                  <td className="py-3 px-4 text-sm text-right text-gray-400">
+                  <td className="py-2 px-2 sm:py-3 sm:px-4 text-sm text-right text-gray-400 hidden sm:table-cell">
                     {entry.round || '-'}
                   </td>
-                  <td className="py-3 px-4 text-sm text-right text-gray-400">
+                  <td className="py-2 px-2 sm:py-3 sm:px-4 text-sm text-right text-gray-400 hidden sm:table-cell">
                     {entry.heatNo}
                   </td>
                 </tr>
@@ -135,7 +135,7 @@ const TopScoresTable = ({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
       {/* Top Heat Scores */}
       <FeatureCard title="Top Heat Scores (Top 10)" isLoading={isLoading}>
         {renderTable(topHeatScores, false, expandedHeat, setExpandedHeat)}

@@ -32,7 +32,11 @@ class Settings(BaseSettings):
 
     # CORS Settings
     CORS_ENABLED: bool = True
-    CORS_ORIGINS: List[str] = ["*"]  # In production, restrict to specific frontend domains
+    CORS_ORIGINS: List[str] = [
+        "https://windsurf-world-tour-stats.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ]
 
     # Database Connection
     DB_HOST: str = "localhost"  # Default to localhost (SSH tunnel for local dev)

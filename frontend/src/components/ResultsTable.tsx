@@ -71,16 +71,16 @@ const ResultsTable = ({ results, isLoading = false, onAthleteClick }: ResultsTab
       <table className="w-full table-fixed">
         <thead>
           <tr className="border-b border-slate-700/50">
-            <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-16">
+            <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-12 sm:w-16">
               Rank
             </th>
-            <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-64">
+            <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
               Athlete
             </th>
-            <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-32">
+            <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-32 hidden sm:table-cell">
               Nationality
             </th>
-            <th className="text-left py-3 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">
+            <th className="text-left py-2 px-2 sm:py-3 sm:px-4 text-xs font-bold text-gray-400 uppercase tracking-wider hidden md:table-cell">
               Sponsor
             </th>
           </tr>
@@ -91,10 +91,10 @@ const ResultsTable = ({ results, isLoading = false, onAthleteClick }: ResultsTab
               key={result.id || `result-${index}`}
               className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors duration-200"
             >
-              <td className="py-4 px-4">
+              <td className="py-3 px-2 sm:py-4 sm:px-4">
                 <div className="flex items-center">
                   <span
-                    className={`text-lg font-bold ${
+                    className={`text-base sm:text-lg font-bold ${
                       result.placement === 1
                         ? 'text-yellow-400'
                         : result.placement === 2
@@ -108,8 +108,8 @@ const ResultsTable = ({ results, isLoading = false, onAthleteClick }: ResultsTab
                   </span>
                 </div>
               </td>
-              <td className="py-4 px-4">
-                <div className="flex items-center gap-3">
+              <td className="py-3 px-2 sm:py-4 sm:px-4">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <AthleteAvatar
                     src={result.profile_picture_url}
                     name={result.athlete_name}
@@ -122,10 +122,10 @@ const ResultsTable = ({ results, isLoading = false, onAthleteClick }: ResultsTab
                     </button>
                 </div>
               </td>
-              <td className="py-4 px-4">
+              <td className="py-3 px-2 sm:py-4 sm:px-4 hidden sm:table-cell">
                 <span className="text-gray-300">{result.nationality}</span>
               </td>
-              <td className="py-4 px-4">
+              <td className="py-3 px-2 sm:py-4 sm:px-4 hidden md:table-cell">
                 {result.pwa_sponsors && (
                   <span className="text-gray-400 italic text-sm">{result.pwa_sponsors}</span>
                 )}
