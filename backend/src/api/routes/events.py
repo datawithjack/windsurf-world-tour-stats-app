@@ -795,7 +795,7 @@ async def list_event_athletes(
                 a.id as athlete_id,
                 a.primary_name as name,
                 a.nationality as country,
-                COALESCE(a.country_code, e.country_code) as country_code,
+                e.country_code as country_code,
                 CASE
                     WHEN r.place REGEXP '^[0-9]+$' THEN CAST(r.place AS UNSIGNED)
                     ELSE 999
@@ -815,7 +815,7 @@ async def list_event_athletes(
                 JOIN ATHLETE_SOURCE_IDS asi2 ON hr.source = asi2.source AND hr.athlete_id = asi2.source_id
             ) hr ON hr.pwa_event_id = r.event_id AND hr.unified_athlete_id = a.id
             WHERE e.id = %s AND r.sex = %s
-            GROUP BY a.id, a.primary_name, a.nationality, a.country_code, e.country_code,
+            GROUP BY a.id, a.primary_name, a.nationality, e.country_code,
                      a.pwa_sail_number, r.sail_number, a.liveheats_image_url, a.pwa_profile_url, r.place
             ORDER BY overall_position ASC
         """
@@ -933,7 +933,7 @@ async def get_athlete_event_stats(
                     a.id as athlete_id,
                     a.primary_name as name,
                     a.nationality as country,
-                    COALESCE(a.country_code, e.country_code) as country_code,
+                    e.country_code as country_code,
                     COALESCE(a.liveheats_image_url, a.pwa_profile_url) as profile_image,
                     a.pwa_sponsors as sponsors,
                     COALESCE(a.pwa_sail_number, r.sail_number) as sail_number,
@@ -958,7 +958,7 @@ async def get_athlete_event_stats(
                     a.id as athlete_id,
                     a.primary_name as name,
                     a.nationality as country,
-                    COALESCE(a.country_code, e.country_code) as country_code,
+                    e.country_code as country_code,
                     COALESCE(a.liveheats_image_url, a.pwa_profile_url) as profile_image,
                     a.pwa_sponsors as sponsors,
                     COALESCE(a.pwa_sail_number, r.sail_number) as sail_number,
