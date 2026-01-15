@@ -109,11 +109,11 @@ def create_athlete_results_view(cursor):
     LEFT JOIN ATHLETES a
         ON asi.athlete_id = a.id
 
-    -- Join to PWA event details by event_id only
-    -- Results from both PWA and LiveHeats sources join to the same PWA event
+    -- Join to event details matching source
+    -- Results join to their corresponding event source
     LEFT JOIN PWA_IWT_EVENTS e
         ON r.event_id = e.event_id
-        AND e.source = 'PWA'
+        AND r.source = e.source
 
     WHERE r.athlete_id IS NOT NULL
       AND r.athlete_id != ''
@@ -196,11 +196,11 @@ def create_athlete_heat_results_view(cursor):
     LEFT JOIN ATHLETES a
         ON asi.athlete_id = a.id
 
-    -- Join to PWA event details by event_id only
-    -- LiveHeats heat data uses pwa_event_id which references the PWA event
+    -- Join to event details matching source
+    -- Heat results join to their corresponding event source
     LEFT JOIN PWA_IWT_EVENTS e
         ON hr.pwa_event_id = e.event_id
-        AND e.source = 'PWA'
+        AND hr.source = e.source
 
     WHERE hr.athlete_id IS NOT NULL
       AND hr.athlete_id != ''
@@ -353,11 +353,11 @@ def create_event_stats_view(cursor):
 
     FROM PWA_IWT_HEAT_SCORES s
 
-    -- Join to PWA event details by event_id only
-    -- LiveHeats scores use pwa_event_id which references the PWA event
+    -- Join to event details matching source
+    -- Scores join to their corresponding event source
     INNER JOIN PWA_IWT_EVENTS e
         ON s.pwa_event_id = e.event_id
-        AND e.source = 'PWA'
+        AND s.source = e.source
 
     -- Join to athlete source IDs to get unified athlete ID
     LEFT JOIN ATHLETE_SOURCE_IDS asi
@@ -442,13 +442,13 @@ def create_event_info_view(cursor):
     LEFT JOIN (
         SELECT
             event_id,
+            source,
             COUNT(DISTINCT athlete_id) AS total_athletes,
             COUNT(DISTINCT CASE WHEN sex = 'Men' THEN athlete_id END) AS total_men,
             COUNT(DISTINCT CASE WHEN sex = 'Women' THEN athlete_id END) AS total_women
         FROM PWA_IWT_RESULTS
-        GROUP BY event_id
-    ) r_counts ON e.event_id = r_counts.event_id
-    WHERE e.source = 'PWA'
+        GROUP BY event_id, source
+    ) r_counts ON e.event_id = r_counts.event_id AND e.source = r_counts.source
     """
 
     cursor.execute(view_sql)
