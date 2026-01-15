@@ -141,46 +141,40 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
   const [roundFilter, setRoundFilter] = useState('');
   const [heatFilter, setHeatFilter] = useState('');
 
-  // Derived data
+  const hasFilters = !!(roundFilter || heatFilter);
+
+  // ALL useMemo hooks must be called BEFORE any early returns (React Rules of Hooks)
+
+  // Derived filter options
   const { uniqueRounds, uniqueHeats } = useMemo(
     () => statsData ? extractFilterOptions(statsData) : { uniqueRounds: [], uniqueHeats: [] },
     [statsData]
   );
 
-  const hasFilters = !!(roundFilter || heatFilter);
+  // Transform and filter score data
+  const data = useMemo(
+    () => statsData ? transformScoreData(statsData) : null,
+    [statsData]
+  );
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="text-center py-12">
-        <div className="animate-pulse space-y-4">
-          <div className="h-32 bg-slate-700 rounded w-full"></div>
-          <div className="h-64 bg-slate-700 rounded w-full"></div>
-        </div>
-      </div>
-    );
-  }
+  const filteredHeatScores = useMemo(
+    () => data ? filterScores(data.topHeatScores, roundFilter, heatFilter) : [],
+    [data, roundFilter, heatFilter]
+  );
 
-  // No data state
-  if (!statsData) {
-    return (
-      <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg">
-        <EmptyState
-          variant="no-data"
-          title="No Stats Available"
-          description="Event statistics are not available for this event."
-        />
-      </div>
-    );
-  }
+  const filteredJumpScores = useMemo(
+    () => data ? filterScores(data.topJumpScores, roundFilter, heatFilter) : [],
+    [data, roundFilter, heatFilter]
+  );
 
-  const data = transformScoreData(statsData);
-  const filteredHeatScores = filterScores(data.topHeatScores, roundFilter, heatFilter);
-  const filteredJumpScores = filterScores(data.topJumpScores, roundFilter, heatFilter);
-  const filteredWaveScores = filterScores(data.topWaveScores, roundFilter, heatFilter);
+  const filteredWaveScores = useMemo(
+    () => data ? filterScores(data.topWaveScores, roundFilter, heatFilter) : [],
+    [data, roundFilter, heatFilter]
+  );
 
   // Calculate filtered summary stats
   const filteredSummaryStats = useMemo(() => {
+    if (!data) return { bestHeatScore: null, bestJumpScore: null, bestWaveScore: null };
     if (!hasFilters) return data.summaryCards;
 
     const bestHeat = filteredHeatScores.length > 0
@@ -226,10 +220,11 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
         all_tied_scores: null,
       } : null,
     };
-  }, [data.summaryCards, filteredHeatScores, filteredJumpScores, filteredWaveScores, hasFilters]);
+  }, [data, filteredHeatScores, filteredJumpScores, filteredWaveScores, hasFilters]);
 
   // Calculate filtered chart data
   const filteredChartData = useMemo(() => {
+    if (!data) return [];
     if (!hasFilters) return data.chartData;
 
     const moveTypeStats = new Map<string, { scores: number[]; bestBy: typeof data.chartData[0]['bestBy'] }>();
@@ -264,7 +259,32 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
       fleetAverage: stat.scores.reduce((a, b) => a + b, 0) / stat.scores.length,
       bestBy: stat.bestBy,
     })).sort((a, b) => b.best - a.best);
-  }, [data.chartData, filteredWaveScores, filteredJumpScores, hasFilters]);
+  }, [data, filteredWaveScores, filteredJumpScores, hasFilters]);
+
+  // Loading state - AFTER all hooks
+  if (isLoading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-pulse space-y-4">
+          <div className="h-32 bg-slate-700 rounded w-full"></div>
+          <div className="h-64 bg-slate-700 rounded w-full"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // No data state - AFTER all hooks
+  if (!statsData || !data) {
+    return (
+      <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg">
+        <EmptyState
+          variant="no-data"
+          title="No Stats Available"
+          description="Event statistics are not available for this event."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
