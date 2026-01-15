@@ -815,7 +815,8 @@ async def list_event_athletes(
                 JOIN ATHLETE_SOURCE_IDS asi2 ON hr.source = asi2.source AND hr.athlete_id = asi2.source_id
             ) hr ON hr.pwa_event_id = r.event_id AND hr.unified_athlete_id = a.id
             WHERE e.id = %s AND r.sex = %s
-            GROUP BY a.id, a.primary_name, a.nationality, a.country_code, e.country_code, sail_number, profile_image, overall_position, overall_position_raw
+            GROUP BY a.id, a.primary_name, a.nationality, a.country_code, e.country_code,
+                     a.pwa_sail_number, r.sail_number, a.liveheats_image_url, a.pwa_profile_url, r.place
             ORDER BY overall_position ASC
         """
 
