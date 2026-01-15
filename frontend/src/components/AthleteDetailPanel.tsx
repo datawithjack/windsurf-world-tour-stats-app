@@ -1,7 +1,98 @@
-import type { AthleteStatsResponse } from '../types';
+import { useState } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import type { AthleteStatsResponse, HeatScoreBreakdown } from '../types';
 import FeatureCard from './FeatureCard';
 import EventStatsChart from './EventStatsChart';
 import AthleteHeatScoresChart from './AthleteHeatScoresChart';
+
+interface ExpandableBestHeatCardProps {
+  score: number;
+  roundName: string;
+  opponents?: string[] | null;
+  breakdown?: HeatScoreBreakdown | null;
+}
+
+const ExpandableBestHeatCard = ({ score, roundName, opponents, breakdown }: ExpandableBestHeatCardProps) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+
+  const hasBreakdown = breakdown && (breakdown.waves.length > 0 || breakdown.jumps.length > 0);
+
+  const handleExpandClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
+  };
+
+  return (
+    <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4 sm:p-6 transition-all duration-300 hover:bg-slate-800/60 hover:border-cyan-500/50">
+      <h3 className="text-base font-medium text-white mb-2 font-inter">
+        Best Heat Score
+      </h3>
+      <p className="text-3xl sm:text-5xl font-bold text-white mb-2">
+        {score.toFixed(2)} <span className="text-xl sm:text-2xl text-gray-400">pts</span>
+      </p>
+      <p className="text-xs text-gray-400">{roundName}</p>
+      {opponents && Array.isArray(opponents) && opponents.length > 0 && (
+        <p className="text-xs text-gray-500 mt-1">v {opponents.join(', ')}</p>
+      )}
+
+      {/* Expandable breakdown section */}
+      {hasBreakdown && (
+        <div className="mt-4">
+          <button
+            onClick={handleExpandClick}
+            className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+          >
+            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            {isExpanded ? 'Hide Counting Scores' : 'Show Counting Scores'}
+          </button>
+
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-3 space-y-3">
+                  {breakdown!.waves.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Top Waves</p>
+                      <div className="flex gap-2">
+                        {breakdown!.waves.map((wave, idx) => (
+                          <div key={idx} className="bg-slate-900/40 border border-slate-700/30 rounded px-2 py-1">
+                            <span className="text-sm text-white font-medium">{wave.score.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {breakdown!.jumps.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Top Jumps</p>
+                      <div className="flex gap-2 flex-wrap">
+                        {breakdown!.jumps.map((jump, idx) => (
+                          <div key={idx} className="bg-slate-900/40 border border-slate-700/30 rounded px-2 py-1">
+                            <span className="text-sm text-white font-medium">{jump.score.toFixed(2)}</span>
+                            <span className="text-xs text-gray-400 ml-1">{jump.move_type}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface AthleteDetailPanelProps {
   data: AthleteStatsResponse;
@@ -66,25 +157,22 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
         hasJumpData && hasWaveData ? 'sm:grid-cols-2 lg:grid-cols-3' :
         hasJumpData || hasWaveData ? 'sm:grid-cols-2' : ''
       }`}>
-        {/* Best Heat Score */}
-        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4 sm:p-6">
-          <h3 className="text-base font-medium text-white mb-2 font-inter">
-            Best Heat Score
-          </h3>
-          {summary_stats.best_heat_score && summary_stats.best_heat_score.score != null ? (
-            <>
-              <p className="text-3xl sm:text-5xl font-bold text-white mb-2">
-                {summary_stats.best_heat_score.score.toFixed(2)} <span className="text-xl sm:text-2xl text-gray-400">pts</span>
-              </p>
-              <p className="text-xs text-gray-400">{summary_stats.best_heat_score.round_name}</p>
-              {summary_stats.best_heat_score.opponents && Array.isArray(summary_stats.best_heat_score.opponents) && summary_stats.best_heat_score.opponents.length > 0 && (
-                <p className="text-xs text-gray-500 mt-1">v {summary_stats.best_heat_score.opponents.join(', ')}</p>
-              )}
-            </>
-          ) : (
+        {/* Best Heat Score - Expandable */}
+        {summary_stats.best_heat_score && summary_stats.best_heat_score.score != null ? (
+          <ExpandableBestHeatCard
+            score={summary_stats.best_heat_score.score}
+            roundName={summary_stats.best_heat_score.round_name}
+            opponents={summary_stats.best_heat_score.opponents}
+            breakdown={summary_stats.best_heat_score.breakdown}
+          />
+        ) : (
+          <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4 sm:p-6">
+            <h3 className="text-base font-medium text-white mb-2 font-inter">
+              Best Heat Score
+            </h3>
             <p className="text-xl text-gray-500">No data available</p>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Best Jump Score - only show if there's jump data */}
         {hasJumpData && (
