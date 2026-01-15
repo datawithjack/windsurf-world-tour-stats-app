@@ -27,6 +27,14 @@ interface EventStatsChartProps {
   isLoading?: boolean;
 }
 
+// Helper to safely format numbers
+const safeToFixed = (value: any, decimals: number = 2): string => {
+  if (typeof value === 'number' && !isNaN(value) && isFinite(value)) {
+    return value.toFixed(decimals);
+  }
+  return '0.00';
+};
+
 // Custom Tooltip Component
 const CustomTooltip = (props: any) => {
   const { active, payload, label } = props;
@@ -41,7 +49,7 @@ const CustomTooltip = (props: any) => {
         {isBest && data.bestBy !== null ? (
           <>
             <p className="text-sm text-gray-300 mb-1">
-              Best: {data.best != null ? data.best.toFixed(2) : '0.00'} pts
+              Best: {safeToFixed(data.best)} pts
             </p>
             <p className="text-xs text-gray-400">
               by {data.bestBy.athlete}
@@ -52,7 +60,7 @@ const CustomTooltip = (props: any) => {
           </>
         ) : (
           <p className="text-sm text-gray-400">
-            {payload[0].name}: {payload[0].value != null ? payload[0].value.toFixed(2) : '0.00'} pts
+            {payload[0].name}: {safeToFixed(payload[0].value)} pts
           </p>
         )}
       </div>
@@ -101,7 +109,7 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-slate-600"></div>
-          <span className="text-gray-400">Average Score</span>
+          <span className="text-gray-400">Average Counting Score</span>
         </div>
       </div>
 
@@ -118,7 +126,8 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
             type="number"
             stroke="#9ca3af"
             style={{ fontSize: '14px', fontWeight: 500 }}
-            domain={[0, 'auto']}
+            domain={[0, 10]}
+            label={{ value: 'pts', position: 'insideBottomRight', fill: '#9ca3af', fontSize: 12, offset: 0 }}
           />
           <YAxis
             type="category"
@@ -139,7 +148,7 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
               dataKey="best"
               position="right"
               style={{ fill: '#f1f5f9', fontSize: '12px', fontWeight: 600 }}
-              formatter={(value: any) => typeof value === 'number' ? value.toFixed(2) : value}
+              formatter={(value: any) => (typeof value === 'number' && !isNaN(value) && isFinite(value)) ? value.toFixed(2) : ''}
             />
           </Bar>
           <Bar
@@ -153,7 +162,7 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
               dataKey="average"
               position="right"
               style={{ fill: '#cbd5e1', fontSize: '12px', fontWeight: 500 }}
-              formatter={(value: any) => typeof value === 'number' ? value.toFixed(2) : value}
+              formatter={(value: any) => (typeof value === 'number' && !isNaN(value) && isFinite(value)) ? value.toFixed(2) : ''}
             />
           </Bar>
         </BarChart>

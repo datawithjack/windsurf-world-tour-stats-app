@@ -146,7 +146,7 @@ const FlipCard = ({ title, scoreData, type }: FlipCardProps) => {
                             <div className="flex gap-2">
                               {scoreData.breakdown.waves.map((wave, idx) => (
                                 <div key={idx} className="bg-slate-900/40 border border-slate-700/30 rounded px-2 py-1">
-                                  <span className="text-sm text-white font-medium">{wave.score.toFixed(2)}</span>
+                                  <span className="text-sm text-white font-medium">{wave.score != null ? wave.score.toFixed(2) : '0.00'}</span>
                                 </div>
                               ))}
                             </div>
@@ -159,7 +159,7 @@ const FlipCard = ({ title, scoreData, type }: FlipCardProps) => {
                             <div className="flex gap-2 flex-wrap">
                               {scoreData.breakdown.jumps.map((jump, idx) => (
                                 <div key={idx} className="bg-slate-900/40 border border-slate-700/30 rounded px-2 py-1">
-                                  <span className="text-sm text-white font-medium">{jump.score.toFixed(2)}</span>
+                                  <span className="text-sm text-white font-medium">{jump.score != null ? jump.score.toFixed(2) : '0.00'}</span>
                                   <span className="text-xs text-gray-400 ml-1">{jump.move_type}</span>
                                 </div>
                               ))}

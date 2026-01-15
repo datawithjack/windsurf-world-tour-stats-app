@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import FeatureCard from './FeatureCard';
 import StatsSummaryCards from './StatsSummaryCards';
 import EventStatsChart from './EventStatsChart';
-import StatsFilterBar from './StatsFilterBar';
 import ScoreTable from './ui/ScoreTable';
 import ShowMoreButton from './ui/ShowMoreButton';
 import EmptyState from './ui/EmptyState';
@@ -48,44 +47,59 @@ interface EventStatsTabContentProps {
   statsData: EventStatsResponse | undefined;
   isLoading: boolean;
   onAthleteClick: (athleteId: number) => void;
+  roundFilter: string;
+  heatFilter: string;
 }
 
-// Transform API response to component format
+// Helper to check if a score is valid
+const isValidScore = (score: number | null | undefined): score is number => {
+  return typeof score === 'number' && !isNaN(score) && isFinite(score);
+};
+
+// Transform API response to component format, filtering out entries with invalid scores
 const transformScoreData = (statsData: EventStatsResponse) => ({
-  topHeatScores: statsData.top_heat_scores?.map(score => ({
-    athlete: score.athlete_name,
-    athleteId: score.athlete_id,
-    score: score.score,
-    heatNo: score.heat_number?.toString() || '',
-    round: score.round_name || '',
-  })) || [],
-  topJumpScores: statsData.top_jump_scores?.map(score => ({
-    athlete: score.athlete_name,
-    athleteId: score.athlete_id,
-    score: score.score,
-    move: score.move_type || 'Unknown',
-    heatNo: score.heat_number?.toString() || '',
-    round: score.round_name || '',
-  })) || [],
-  topWaveScores: statsData.top_wave_scores?.map(score => ({
-    athlete: score.athlete_name,
-    athleteId: score.athlete_id,
-    score: score.score,
-    heatNo: score.heat_number?.toString() || '',
-    round: score.round_name || '',
-  })) || [],
-  chartData: statsData.move_type_stats?.map(stat => ({
-    type: stat.move_type,
-    best: stat.best_score,
-    average: stat.average_score,
-    fleetAverage: stat.fleet_average,
-    bestBy: stat.best_scored_by ? {
-      athlete: stat.best_scored_by.athlete_name,
-      heat: stat.best_scored_by.heat_number?.toString() || '',
-      round: stat.best_scored_by.round_name || '',
-      score: stat.best_scored_by.score,
-    } : null,
-  })) || [],
+  topHeatScores: (statsData.top_heat_scores || [])
+    .filter(score => isValidScore(score.score))
+    .map(score => ({
+      athlete: score.athlete_name,
+      athleteId: score.athlete_id,
+      score: score.score as number,
+      heatNo: score.heat_number?.toString() || '',
+      round: score.round_name || '',
+    })),
+  topJumpScores: (statsData.top_jump_scores || [])
+    .filter(score => isValidScore(score.score))
+    .map(score => ({
+      athlete: score.athlete_name,
+      athleteId: score.athlete_id,
+      score: score.score as number,
+      move: score.move_type || 'Unknown',
+      heatNo: score.heat_number?.toString() || '',
+      round: score.round_name || '',
+    })),
+  topWaveScores: (statsData.top_wave_scores || [])
+    .filter(score => isValidScore(score.score))
+    .map(score => ({
+      athlete: score.athlete_name,
+      athleteId: score.athlete_id,
+      score: score.score as number,
+      heatNo: score.heat_number?.toString() || '',
+      round: score.round_name || '',
+    })),
+  chartData: (statsData.move_type_stats || [])
+    .filter(stat => isValidScore(stat.best_score) && isValidScore(stat.average_score))
+    .map(stat => ({
+      type: stat.move_type,
+      best: stat.best_score as number,
+      average: stat.average_score as number,
+      fleetAverage: stat.fleet_average ?? stat.average_score as number,
+      bestBy: stat.best_scored_by ? {
+        athlete: stat.best_scored_by.athlete_name,
+        heat: stat.best_scored_by.heat_number?.toString() || '',
+        round: stat.best_scored_by.round_name || '',
+        score: stat.best_scored_by.score,
+      } : null,
+    })),
   summaryCards: {
     bestHeatScore: statsData.summary_stats?.best_heat_score || null,
     bestJumpScore: statsData.summary_stats?.best_jump_score || null,
@@ -93,28 +107,61 @@ const transformScoreData = (statsData: EventStatsResponse) => ({
   },
 });
 
-// Extract unique rounds and heats from score data
-const extractFilterOptions = (statsData: EventStatsResponse) => {
-  const rounds = new Set<string>();
-  const heatDataCount = new Map<string, number>();
+// Extract unique rounds and heats from score data, building a round->heats map
+// Only includes rounds/heats that have actual wave or jump score data (not just heat totals)
+export const extractFilterOptions = (statsData: EventStatsResponse) => {
+  const roundHeatsMap = new Map<string, Set<string>>();
+  const allHeats = new Set<string>();
 
-  [...(statsData.top_heat_scores || []),
-   ...(statsData.top_jump_scores || []),
-   ...(statsData.top_wave_scores || [])].forEach((score) => {
-    if (score.round_name) rounds.add(score.round_name);
-    if (score.heat_number) {
-      heatDataCount.set(score.heat_number, (heatDataCount.get(score.heat_number) || 0) + 1);
+  // Only use wave and jump scores - these represent actual detailed score data
+  // Exclude top_heat_scores as those are just totals without breakdown data
+  const scoresWithData = [
+    ...(statsData.top_jump_scores || []),
+    ...(statsData.top_wave_scores || []),
+  ];
+
+  scoresWithData.forEach((score) => {
+    const round = score.round_name || '';
+    const heat = score.heat_number || '';
+
+    // Only add round if it has a valid heat with score data
+    if (heat) {
+      allHeats.add(heat);
+      if (round) {
+        if (!roundHeatsMap.has(round)) {
+          roundHeatsMap.set(round, new Set());
+        }
+        roundHeatsMap.get(round)!.add(heat);
+      }
     }
   });
 
+  const sortHeats = (heats: string[]) => heats.sort((a, b) => {
+    const numA = parseInt(a.replace(/\D/g, ''));
+    const numB = parseInt(b.replace(/\D/g, ''));
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return a.localeCompare(b);
+  });
+
+  // Sort rounds in logical order (Round 1, Round 2, etc.)
+  const sortRounds = (rounds: string[]) => rounds.sort((a, b) => {
+    const numA = parseInt(a.replace(/\D/g, ''));
+    const numB = parseInt(b.replace(/\D/g, ''));
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return a.localeCompare(b);
+  });
+
+  const uniqueRounds = sortRounds(Array.from(roundHeatsMap.keys()));
+  const uniqueHeats = sortHeats(Array.from(allHeats));
+
   return {
-    uniqueRounds: Array.from(rounds).sort(),
-    uniqueHeats: Array.from(heatDataCount.keys()).sort((a, b) => {
-      const numA = parseInt(a.replace(/\D/g, ''));
-      const numB = parseInt(b.replace(/\D/g, ''));
-      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-      return a.localeCompare(b);
-    }),
+    uniqueRounds,
+    uniqueHeats,
+    roundHeatsMap,
+    getHeatsForRound: (round: string) => {
+      if (!round) return uniqueHeats;
+      return sortHeats(Array.from(roundHeatsMap.get(round) || []));
+    },
   };
 };
 
@@ -131,25 +178,13 @@ const filterScores = <T extends BaseScoreEntry>(
   });
 };
 
-const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventStatsTabContentProps) => {
+const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick, roundFilter, heatFilter }: EventStatsTabContentProps) => {
   // Pagination state
   const [heatScoresLimit, setHeatScoresLimit] = useState(DEFAULT_ROWS);
   const [jumpScoresLimit, setJumpScoresLimit] = useState(DEFAULT_ROWS);
   const [waveScoresLimit, setWaveScoresLimit] = useState(DEFAULT_ROWS);
 
-  // Filter state
-  const [roundFilter, setRoundFilter] = useState('');
-  const [heatFilter, setHeatFilter] = useState('');
-
   const hasFilters = !!(roundFilter || heatFilter);
-
-  // ALL useMemo hooks must be called BEFORE any early returns (React Rules of Hooks)
-
-  // Derived filter options
-  const { uniqueRounds, uniqueHeats } = useMemo(
-    () => statsData ? extractFilterOptions(statsData) : { uniqueRounds: [], uniqueHeats: [] },
-    [statsData]
-  );
 
   // Transform and filter score data
   const data = useMemo(
@@ -252,13 +287,25 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
       }
     });
 
-    return Array.from(moveTypeStats.entries()).map(([type, stat]) => ({
-      type,
-      best: Math.max(...stat.scores),
-      average: stat.scores.reduce((a, b) => a + b, 0) / stat.scores.length,
-      fleetAverage: stat.scores.reduce((a, b) => a + b, 0) / stat.scores.length,
-      bestBy: stat.bestBy,
-    })).sort((a, b) => b.best - a.best);
+    // Filter out entries with no valid scores and calculate stats safely
+    return Array.from(moveTypeStats.entries())
+      .filter(([, stat]) => stat.scores.length > 0)
+      .map(([type, stat]) => {
+        // Filter out null/NaN scores
+        const validScores = stat.scores.filter(s => typeof s === 'number' && !isNaN(s) && isFinite(s));
+        if (validScores.length === 0) {
+          return null;
+        }
+        return {
+          type,
+          best: Math.max(...validScores),
+          average: validScores.reduce((a, b) => a + b, 0) / validScores.length,
+          fleetAverage: validScores.reduce((a, b) => a + b, 0) / validScores.length,
+          bestBy: stat.bestBy,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+      .sort((a, b) => b.best - a.best);
   }, [data, filteredWaveScores, filteredJumpScores, hasFilters]);
 
   // Loading state - AFTER all hooks
@@ -288,20 +335,6 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick }: EventSta
 
   return (
     <div className="space-y-8">
-      {/* Filter Bar */}
-      <StatsFilterBar
-        rounds={uniqueRounds}
-        heats={uniqueHeats}
-        roundFilter={roundFilter}
-        heatFilter={heatFilter}
-        onRoundChange={setRoundFilter}
-        onHeatChange={setHeatFilter}
-        onClear={() => {
-          setRoundFilter('');
-          setHeatFilter('');
-        }}
-      />
-
       {/* Summary Cards */}
       {(filteredSummaryStats.bestHeatScore || filteredSummaryStats.bestJumpScore || filteredSummaryStats.bestWaveScore) && (
         <StatsSummaryCards

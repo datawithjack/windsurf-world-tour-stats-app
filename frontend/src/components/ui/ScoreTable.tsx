@@ -121,7 +121,7 @@ function ScoreTable<T extends ScoreEntry>({
                         col.align === 'right' ? 'text-right' : ''
                       }`}
                     >
-                      {entry.score.toFixed(2)}
+                      {entry.score != null ? entry.score.toFixed(2) : '0.00'}
                     </td>
                   );
                 }

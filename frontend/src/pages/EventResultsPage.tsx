@@ -1,11 +1,11 @@
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Star, User, Loader2, Info, X } from 'lucide-react';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
 import FeatureCard from '../components/FeatureCard';
 import ResultsTable from '../components/ResultsTable';
-import EventStatsTabContent from '../components/EventStatsTabContent';
+import EventStatsTabContent, { extractFilterOptions } from '../components/EventStatsTabContent';
 import AthleteStatsTab from '../components/AthleteStatsTab';
 import HeadToHeadComparison from '../components/HeadToHeadComparison';
 import Select from '../components/ui/Select';
@@ -34,6 +34,10 @@ const EventResultsPage = () => {
   const [selectedAthleteId, setSelectedAthleteId] = useState<number | null>(null);
   const [defaultSet, setDefaultSet] = useState(false);
   const [genderSwitchNotice, setGenderSwitchNotice] = useState(false);
+
+  // Event stats filter state
+  const [roundFilter, setRoundFilter] = useState('');
+  const [heatFilter, setHeatFilter] = useState('');
 
   // Refs for tab navigation scrolling
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
@@ -91,6 +95,37 @@ const EventResultsPage = () => {
     enabled: !!event?.id && genderFilter !== 'all' && activeTab === 'athlete-stats',
     retry: 1,
   });
+
+  // Derive filter options from stats data
+  const filterOptions = useMemo(
+    () => statsData ? extractFilterOptions(statsData) : { uniqueRounds: [], uniqueHeats: [], getHeatsForRound: () => [] },
+    [statsData]
+  );
+
+  // Get available heats based on selected round
+  const availableHeats = useMemo(
+    () => filterOptions.getHeatsForRound(roundFilter),
+    [filterOptions, roundFilter]
+  );
+
+  // Handle round filter change - clear heat if not valid for new round
+  const handleRoundChange = useCallback((newRound: string) => {
+    setRoundFilter(newRound);
+    // If switching to a specific round and current heat is not valid, clear it
+    if (newRound && heatFilter) {
+      const heatsForNewRound = filterOptions.getHeatsForRound(newRound);
+      if (!heatsForNewRound.includes(heatFilter)) {
+        setHeatFilter('');
+      }
+    }
+  }, [filterOptions, heatFilter]);
+
+  // Handle gender change - reset all event stats filters
+  const handleGenderChange = useCallback((newGender: GenderType) => {
+    setGenderFilter(newGender);
+    setRoundFilter('');
+    setHeatFilter('');
+  }, []);
 
   // Set default gender filter and selected athlete based on available results
   useEffect(() => {
@@ -314,12 +349,51 @@ const EventResultsPage = () => {
           <div className="flex items-center gap-3 flex-wrap">
             <Select
               value={genderFilter}
-              onChange={(e) => setGenderFilter(e.target.value as 'all' | 'men' | 'women')}
+              onChange={(e) => handleGenderChange(e.target.value as GenderType)}
               aria-label="Filter by gender"
             >
               <option value="men">Men</option>
               <option value="women">Women</option>
             </Select>
+
+            {/* Round/Heat Filters - only show on Event Stats tab */}
+            {activeTab === 'event-stats' && filterOptions.uniqueRounds.length > 0 && (
+              <>
+                <Select
+                  value={roundFilter}
+                  onChange={(e) => handleRoundChange(e.target.value)}
+                  aria-label="Filter by round"
+                >
+                  <option value="">All Rounds</option>
+                  {filterOptions.uniqueRounds.map((round) => (
+                    <option key={round} value={round}>{round}</option>
+                  ))}
+                </Select>
+
+                <Select
+                  value={heatFilter}
+                  onChange={(e) => setHeatFilter(e.target.value)}
+                  aria-label="Filter by heat"
+                >
+                  <option value="">All Heats</option>
+                  {availableHeats.map((heat) => (
+                    <option key={heat} value={heat}>Heat {heat}</option>
+                  ))}
+                </Select>
+
+                {(roundFilter || heatFilter) && (
+                  <button
+                    onClick={() => {
+                      setRoundFilter('');
+                      setHeatFilter('');
+                    }}
+                    className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors px-2"
+                  >
+                    Clear
+                  </button>
+                )}
+              </>
+            )}
 
             {/* Athlete Filter - only show on Athlete Stats tab */}
             {activeTab === 'athlete-stats' && (
@@ -358,6 +432,8 @@ const EventResultsPage = () => {
               statsData={statsData}
               isLoading={statsLoading}
               onAthleteClick={handleAthleteClick}
+              roundFilter={roundFilter}
+              heatFilter={heatFilter}
             />
           ) : activeTab === 'athlete-stats' ? (
             <AthleteStatsTab
