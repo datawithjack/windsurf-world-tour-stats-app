@@ -803,6 +803,7 @@ class ScoreEntry(BaseModel):
     score: Optional[float] = Field(None, description="Score value (rounded to 2 decimal places)")
     heat_number: Optional[str] = Field(None, description="Heat number/identifier")
     round_name: Optional[str] = Field(None, description="Round name (e.g., 'Winners Final', 'Semi-Finals')")
+    elimination_type: Optional[str] = Field(None, description="Elimination type: 'Single' or 'Double' (null for LiveHeats)")
 
     class Config:
         from_attributes = True
@@ -813,7 +814,8 @@ class ScoreEntry(BaseModel):
                 "athlete_id": 456,
                 "score": 24.50,
                 "heat_number": "21a",
-                "round_name": "Winners Final"
+                "round_name": "Winners Final",
+                "elimination_type": "Double"
             }
         }
 

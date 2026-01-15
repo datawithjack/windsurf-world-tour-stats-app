@@ -38,6 +38,7 @@ const EventResultsPage = () => {
   // Event stats filter state
   const [roundFilter, setRoundFilter] = useState('');
   const [heatFilter, setHeatFilter] = useState('');
+  const [eliminationFilter, setEliminationFilter] = useState('');
 
   // Refs for tab navigation scrolling
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
@@ -98,7 +99,7 @@ const EventResultsPage = () => {
 
   // Derive filter options from stats data
   const filterOptions = useMemo(
-    () => statsData ? extractFilterOptions(statsData) : { uniqueRounds: [], uniqueHeats: [], getHeatsForRound: () => [] },
+    () => statsData ? extractFilterOptions(statsData) : { uniqueRounds: [], uniqueHeats: [], uniqueEliminations: [], getHeatsForRound: () => [] },
     [statsData]
   );
 
@@ -125,6 +126,7 @@ const EventResultsPage = () => {
     setGenderFilter(newGender);
     setRoundFilter('');
     setHeatFilter('');
+    setEliminationFilter('');
   }, []);
 
   // Set default gender filter and selected athlete based on available results
@@ -356,7 +358,7 @@ const EventResultsPage = () => {
               <option value="women">Women</option>
             </Select>
 
-            {/* Round/Heat Filters - only show on Event Stats tab */}
+            {/* Round/Heat/Elimination Filters - only show on Event Stats tab */}
             {activeTab === 'event-stats' && filterOptions.uniqueRounds.length > 0 && (
               <>
                 <Select
@@ -370,6 +372,20 @@ const EventResultsPage = () => {
                   ))}
                 </Select>
 
+                {/* Elimination filter - only show if there are elimination types (PWA events) */}
+                {filterOptions.uniqueEliminations.length > 0 && (
+                  <Select
+                    value={eliminationFilter}
+                    onChange={(e) => setEliminationFilter(e.target.value)}
+                    aria-label="Filter by elimination"
+                  >
+                    <option value="">All Eliminations</option>
+                    {filterOptions.uniqueEliminations.map((elim) => (
+                      <option key={elim} value={elim}>{elim}</option>
+                    ))}
+                  </Select>
+                )}
+
                 <Select
                   value={heatFilter}
                   onChange={(e) => setHeatFilter(e.target.value)}
@@ -381,11 +397,12 @@ const EventResultsPage = () => {
                   ))}
                 </Select>
 
-                {(roundFilter || heatFilter) && (
+                {(roundFilter || heatFilter || eliminationFilter) && (
                   <button
                     onClick={() => {
                       setRoundFilter('');
                       setHeatFilter('');
+                      setEliminationFilter('');
                     }}
                     className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors px-2"
                   >
@@ -434,6 +451,7 @@ const EventResultsPage = () => {
               onAthleteClick={handleAthleteClick}
               roundFilter={roundFilter}
               heatFilter={heatFilter}
+              eliminationFilter={eliminationFilter}
             />
           ) : activeTab === 'athlete-stats' ? (
             <AthleteStatsTab

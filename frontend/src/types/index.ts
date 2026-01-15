@@ -170,6 +170,7 @@ export interface TopScore {
   heat_number: string;
   round_name?: string;
   move_type?: string;
+  elimination_type?: 'Single' | 'Double' | null;
 }
 
 export interface EventStatsResponse {

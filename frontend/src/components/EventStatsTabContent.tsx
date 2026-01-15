@@ -14,6 +14,7 @@ interface BaseScoreEntry {
   score: number;
   round: string;
   heatNo: string;
+  eliminationType: string | null;
 }
 
 interface JumpScoreEntry extends BaseScoreEntry {
@@ -49,6 +50,7 @@ interface EventStatsTabContentProps {
   onAthleteClick: (athleteId: number) => void;
   roundFilter: string;
   heatFilter: string;
+  eliminationFilter: string;
 }
 
 // Helper to check if a score is valid
@@ -66,6 +68,7 @@ const transformScoreData = (statsData: EventStatsResponse) => ({
       score: score.score as number,
       heatNo: score.heat_number?.toString() || '',
       round: score.round_name || '',
+      eliminationType: score.elimination_type || null,
     })),
   topJumpScores: (statsData.top_jump_scores || [])
     .filter(score => isValidScore(score.score))
@@ -76,6 +79,7 @@ const transformScoreData = (statsData: EventStatsResponse) => ({
       move: score.move_type || 'Unknown',
       heatNo: score.heat_number?.toString() || '',
       round: score.round_name || '',
+      eliminationType: score.elimination_type || null,
     })),
   topWaveScores: (statsData.top_wave_scores || [])
     .filter(score => isValidScore(score.score))
@@ -85,6 +89,7 @@ const transformScoreData = (statsData: EventStatsResponse) => ({
       score: score.score as number,
       heatNo: score.heat_number?.toString() || '',
       round: score.round_name || '',
+      eliminationType: score.elimination_type || null,
     })),
   chartData: (statsData.move_type_stats || [])
     .filter(stat => isValidScore(stat.best_score) && isValidScore(stat.average_score))
@@ -107,11 +112,12 @@ const transformScoreData = (statsData: EventStatsResponse) => ({
   },
 });
 
-// Extract unique rounds and heats from score data, building a round->heats map
+// Extract unique rounds, heats, and elimination types from score data
 // Only includes rounds/heats that have actual wave or jump score data (not just heat totals)
 export const extractFilterOptions = (statsData: EventStatsResponse) => {
   const roundHeatsMap = new Map<string, Set<string>>();
   const allHeats = new Set<string>();
+  const allEliminationTypes = new Set<string>();
 
   // Only use wave and jump scores - these represent actual detailed score data
   // Exclude top_heat_scores as those are just totals without breakdown data
@@ -123,6 +129,12 @@ export const extractFilterOptions = (statsData: EventStatsResponse) => {
   scoresWithData.forEach((score) => {
     const round = score.round_name || '';
     const heat = score.heat_number || '';
+    const eliminationType = score.elimination_type;
+
+    // Track elimination types (only non-null values from PWA events)
+    if (eliminationType) {
+      allEliminationTypes.add(eliminationType);
+    }
 
     // Only add round if it has a valid heat with score data
     if (heat) {
@@ -153,10 +165,17 @@ export const extractFilterOptions = (statsData: EventStatsResponse) => {
 
   const uniqueRounds = sortRounds(Array.from(roundHeatsMap.keys()));
   const uniqueHeats = sortHeats(Array.from(allHeats));
+  // Sort elimination types: Single first, then Double
+  const uniqueEliminations = Array.from(allEliminationTypes).sort((a, b) => {
+    if (a === 'Single') return -1;
+    if (b === 'Single') return 1;
+    return a.localeCompare(b);
+  });
 
   return {
     uniqueRounds,
     uniqueHeats,
+    uniqueEliminations,
     roundHeatsMap,
     getHeatsForRound: (round: string) => {
       if (!round) return uniqueHeats;
@@ -169,22 +188,24 @@ export const extractFilterOptions = (statsData: EventStatsResponse) => {
 const filterScores = <T extends BaseScoreEntry>(
   scores: T[],
   roundFilter: string,
-  heatFilter: string
+  heatFilter: string,
+  eliminationFilter: string
 ): T[] => {
   return scores.filter((score) => {
     if (roundFilter && score.round !== roundFilter) return false;
     if (heatFilter && score.heatNo !== heatFilter) return false;
+    if (eliminationFilter && score.eliminationType !== eliminationFilter) return false;
     return true;
   });
 };
 
-const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick, roundFilter, heatFilter }: EventStatsTabContentProps) => {
+const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick, roundFilter, heatFilter, eliminationFilter }: EventStatsTabContentProps) => {
   // Pagination state
   const [heatScoresLimit, setHeatScoresLimit] = useState(DEFAULT_ROWS);
   const [jumpScoresLimit, setJumpScoresLimit] = useState(DEFAULT_ROWS);
   const [waveScoresLimit, setWaveScoresLimit] = useState(DEFAULT_ROWS);
 
-  const hasFilters = !!(roundFilter || heatFilter);
+  const hasFilters = !!(roundFilter || heatFilter || eliminationFilter);
 
   // Transform and filter score data
   const data = useMemo(
@@ -193,18 +214,18 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick, roundFilte
   );
 
   const filteredHeatScores = useMemo(
-    () => data ? filterScores(data.topHeatScores, roundFilter, heatFilter) : [],
-    [data, roundFilter, heatFilter]
+    () => data ? filterScores(data.topHeatScores, roundFilter, heatFilter, eliminationFilter) : [],
+    [data, roundFilter, heatFilter, eliminationFilter]
   );
 
   const filteredJumpScores = useMemo(
-    () => data ? filterScores(data.topJumpScores, roundFilter, heatFilter) : [],
-    [data, roundFilter, heatFilter]
+    () => data ? filterScores(data.topJumpScores, roundFilter, heatFilter, eliminationFilter) : [],
+    [data, roundFilter, heatFilter, eliminationFilter]
   );
 
   const filteredWaveScores = useMemo(
-    () => data ? filterScores(data.topWaveScores, roundFilter, heatFilter) : [],
-    [data, roundFilter, heatFilter]
+    () => data ? filterScores(data.topWaveScores, roundFilter, heatFilter, eliminationFilter) : [],
+    [data, roundFilter, heatFilter, eliminationFilter]
   );
 
   // Calculate filtered summary stats

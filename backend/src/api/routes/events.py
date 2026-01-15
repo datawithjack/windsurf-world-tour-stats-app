@@ -589,7 +589,12 @@ async def get_event_stats(
                     WHEN hr.source = 'PWA' THEN SUBSTRING_INDEX(hr.heat_id, '_', -1)
                     ELSE hr.heat_id
                 END as heat_number,
-                hp.round_name
+                hp.round_name,
+                CASE
+                    WHEN hr.source = 'PWA' THEN
+                        CASE WHEN hp.elimination_name LIKE '%double%' THEN 'Double' ELSE 'Single' END
+                    ELSE NULL
+                END as elimination_type
             FROM PWA_IWT_HEAT_RESULTS hr
             INNER JOIN PWA_IWT_EVENTS e ON hr.pwa_event_id = e.event_id AND hr.source = e.source
             INNER JOIN ATHLETE_SOURCE_IDS asi_hr ON hr.source = asi_hr.source AND hr.athlete_id = asi_hr.source_id
@@ -615,7 +620,12 @@ async def get_event_stats(
                     WHEN s.source = 'PWA' THEN SUBSTRING_INDEX(s.heat_id, '_', -1)
                     ELSE s.heat_id
                 END as heat_number,
-                hp.round_name
+                hp.round_name,
+                CASE
+                    WHEN s.source = 'PWA' THEN
+                        CASE WHEN hp.elimination_name LIKE '%double%' THEN 'Double' ELSE 'Single' END
+                    ELSE NULL
+                END as elimination_type
             FROM PWA_IWT_HEAT_SCORES s
             INNER JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND s.source = e.source
             INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
@@ -642,7 +652,12 @@ async def get_event_stats(
                     WHEN s.source = 'PWA' THEN SUBSTRING_INDEX(s.heat_id, '_', -1)
                     ELSE s.heat_id
                 END as heat_number,
-                hp.round_name
+                hp.round_name,
+                CASE
+                    WHEN s.source = 'PWA' THEN
+                        CASE WHEN hp.elimination_name LIKE '%double%' THEN 'Double' ELSE 'Single' END
+                    ELSE NULL
+                END as elimination_type
             FROM PWA_IWT_HEAT_SCORES s
             INNER JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND s.source = e.source
             INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
