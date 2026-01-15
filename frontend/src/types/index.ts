@@ -239,11 +239,27 @@ export interface AthleteProfile {
   sail_number: string | null;
 }
 
+export interface TiedJumpScore {
+  score: number;
+  heat: string;
+  heat_number?: string | null;
+  round_name?: string | null;
+  move: string;
+}
+
+export interface TiedWaveScore {
+  score: number;
+  heat: string;
+  heat_number?: string | null;
+  round_name?: string | null;
+}
+
 export interface AthleteSummaryStats {
   overall_position: number;
   best_heat_score: {
     score: number;
     heat: string;
+    heat_number?: string | null;
     round_name: string;
     opponents?: string[] | null;
     breakdown?: HeatScoreBreakdown | null;
@@ -251,15 +267,21 @@ export interface AthleteSummaryStats {
   best_jump_score: {
     score: number;
     heat: string;
+    heat_number?: string | null;
     round_name: string;
     move: string;
     opponents?: string[] | null;
+    has_multiple_tied?: boolean;
+    all_tied_scores?: TiedJumpScore[] | null;
   } | null;
   best_wave_score: {
     score: number;
     heat: string;
+    heat_number?: string | null;
     round_name: string;
     opponents?: string[] | null;
+    has_multiple_tied?: boolean;
+    all_tied_scores?: TiedWaveScore[] | null;
   } | null;
 }
 
@@ -283,6 +305,7 @@ export interface JumpScore {
   move: string;
   score: number;
   counting: boolean;
+  elimination_type?: 'Single' | 'Double' | null;
 }
 
 export interface WaveScore {
@@ -291,6 +314,7 @@ export interface WaveScore {
   score: number;
   counting: boolean;
   wave_index?: number;
+  elimination_type?: 'Single' | 'Double' | null;
 }
 
 export interface AthleteStatsResponse {

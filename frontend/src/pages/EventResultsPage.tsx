@@ -6,7 +6,7 @@ import { apiService } from '../services/api';
 import FeatureCard from '../components/FeatureCard';
 import ResultsTable from '../components/ResultsTable';
 import EventStatsTabContent, { extractFilterOptions } from '../components/EventStatsTabContent';
-import AthleteStatsTab from '../components/AthleteStatsTab';
+import AthleteStatsTab, { extractAthleteFilterOptions } from '../components/AthleteStatsTab';
 import HeadToHeadComparison from '../components/HeadToHeadComparison';
 import Select from '../components/ui/Select';
 import SearchableSelect from '../components/ui/SearchableSelect';
@@ -39,6 +39,12 @@ const EventResultsPage = () => {
   const [roundFilter, setRoundFilter] = useState('');
   const [heatFilter, setHeatFilter] = useState('');
   const [eliminationFilter, setEliminationFilter] = useState('');
+
+  // Athlete stats filter state (separate from event stats)
+  const [athleteRoundFilter, setAthleteRoundFilter] = useState('');
+  const [athleteHeatFilter, setAthleteHeatFilter] = useState('');
+  const [athleteEliminationFilter, setAthleteEliminationFilter] = useState('');
+  const [athleteFilterOptions, setAthleteFilterOptions] = useState<ReturnType<typeof extractAthleteFilterOptions> | null>(null);
 
   // Refs for tab navigation scrolling
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
@@ -146,12 +152,50 @@ const EventResultsPage = () => {
     }
   }, [filterOptions, heatFilter]);
 
-  // Handle gender change - reset all event stats filters
+  // Athlete stats cascading filter handlers
+  const handleAthleteEliminationChange = useCallback((newElimination: string) => {
+    setAthleteEliminationFilter(newElimination);
+    if (newElimination && athleteRoundFilter && athleteFilterOptions) {
+      const roundsForElimination = athleteFilterOptions.getRoundsForElimination(newElimination);
+      if (!roundsForElimination.includes(athleteRoundFilter)) {
+        setAthleteRoundFilter('');
+        setAthleteHeatFilter('');
+      }
+    }
+  }, [athleteFilterOptions, athleteRoundFilter]);
+
+  const handleAthleteRoundChange = useCallback((newRound: string) => {
+    setAthleteRoundFilter(newRound);
+    if (newRound && athleteHeatFilter && athleteFilterOptions) {
+      const heatsForNewRound = athleteFilterOptions.getHeatsForRound(newRound);
+      if (!heatsForNewRound.includes(athleteHeatFilter)) {
+        setAthleteHeatFilter('');
+      }
+    }
+  }, [athleteFilterOptions, athleteHeatFilter]);
+
+  // Get available rounds and heats for athlete stats filters based on current selection
+  const athleteAvailableRounds = useMemo(
+    () => athleteFilterOptions?.getRoundsForElimination(athleteEliminationFilter) || [],
+    [athleteFilterOptions, athleteEliminationFilter]
+  );
+
+  const athleteAvailableHeats = useMemo(
+    () => athleteFilterOptions?.getHeatsForRound(athleteRoundFilter) || [],
+    [athleteFilterOptions, athleteRoundFilter]
+  );
+
+  // Handle gender change - reset all filters
   const handleGenderChange = useCallback((newGender: GenderType) => {
     setGenderFilter(newGender);
+    // Reset event stats filters
     setRoundFilter('');
     setHeatFilter('');
     setEliminationFilter('');
+    // Reset athlete stats filters
+    setAthleteRoundFilter('');
+    setAthleteHeatFilter('');
+    setAthleteEliminationFilter('');
   }, []);
 
   // Set default gender filter and selected athlete based on available results
@@ -179,6 +223,13 @@ const EventResultsPage = () => {
   useEffect(() => {
     setSelectedAthleteId(null);
   }, [genderFilter]);
+
+  // Reset athlete stats filters when selected athlete changes
+  useEffect(() => {
+    setAthleteRoundFilter('');
+    setAthleteHeatFilter('');
+    setAthleteEliminationFilter('');
+  }, [selectedAthleteId]);
 
   // Handle clicking on an athlete name to navigate to their stats
   const handleAthleteClick = (athleteId: number) => {
@@ -440,22 +491,80 @@ const EventResultsPage = () => {
               </>
             )}
 
-            {/* Athlete Filter - only show on Athlete Stats tab */}
+            {/* Athlete Filter and Cascading Score Filters - only show on Athlete Stats tab */}
             {activeTab === 'athlete-stats' && (
-              <SearchableSelect
-                options={
-                  athleteListData?.athletes?.map((athlete) => ({
-                    value: athlete.athlete_id,
-                    label: `${athlete.overall_position}. ${athlete.name} (${athlete.country_code})`,
-                  })) || []
-                }
-                value={selectedAthleteId}
-                onChange={(val) => setSelectedAthleteId(val as number | null)}
-                placeholder={athleteListLoading ? 'Loading athletes...' : 'Search athletes...'}
-                aria-label="Select athlete"
-                disabled={athleteListLoading || !athleteListData?.athletes.length}
-                className="min-w-[280px]"
-              />
+              <>
+                <SearchableSelect
+                  options={
+                    athleteListData?.athletes?.map((athlete) => ({
+                      value: athlete.athlete_id,
+                      label: `${athlete.overall_position}. ${athlete.name} (${athlete.country_code})`,
+                    })) || []
+                  }
+                  value={selectedAthleteId}
+                  onChange={(val) => setSelectedAthleteId(val as number | null)}
+                  placeholder={athleteListLoading ? 'Loading athletes...' : 'Search athletes...'}
+                  aria-label="Select athlete"
+                  disabled={athleteListLoading || !athleteListData?.athletes.length}
+                  className="min-w-[280px]"
+                />
+
+                {/* Cascading Filters for Athlete Stats - Elimination → Round → Heat */}
+                {selectedAthleteId && athleteFilterOptions && athleteAvailableRounds.length > 0 && (
+                  <>
+                    {/* Elimination filter - only show if there are elimination types */}
+                    {athleteFilterOptions.uniqueEliminations.length > 0 && (
+                      <Select
+                        value={athleteEliminationFilter}
+                        onChange={(e) => handleAthleteEliminationChange(e.target.value)}
+                        aria-label="Filter by elimination"
+                      >
+                        <option value="">All Eliminations</option>
+                        {athleteFilterOptions.uniqueEliminations.map((elim) => (
+                          <option key={elim} value={elim}>{elim}</option>
+                        ))}
+                      </Select>
+                    )}
+
+                    {/* Round filter - options depend on selected elimination */}
+                    <Select
+                      value={athleteRoundFilter}
+                      onChange={(e) => handleAthleteRoundChange(e.target.value)}
+                      aria-label="Filter by round"
+                    >
+                      <option value="">All Rounds</option>
+                      {athleteAvailableRounds.map((round) => (
+                        <option key={round} value={round}>{round}</option>
+                      ))}
+                    </Select>
+
+                    {/* Heat filter - options depend on selected round */}
+                    <Select
+                      value={athleteHeatFilter}
+                      onChange={(e) => setAthleteHeatFilter(e.target.value)}
+                      aria-label="Filter by heat"
+                    >
+                      <option value="">All Heats</option>
+                      {athleteAvailableHeats.map((heat) => (
+                        <option key={heat} value={heat}>Heat {heat}</option>
+                      ))}
+                    </Select>
+
+                    {(athleteRoundFilter || athleteHeatFilter || athleteEliminationFilter) && (
+                      <button
+                        onClick={() => {
+                          setAthleteEliminationFilter('');
+                          setAthleteRoundFilter('');
+                          setAthleteHeatFilter('');
+                        }}
+                        className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors px-2"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -486,6 +595,10 @@ const EventResultsPage = () => {
               eventId={event?.id || 0}
               selectedAthleteId={selectedAthleteId}
               sex={genderFilter === 'men' ? 'Men' : 'Women'}
+              eliminationFilter={athleteEliminationFilter}
+              roundFilter={athleteRoundFilter}
+              heatFilter={athleteHeatFilter}
+              onFilterOptionsChange={setAthleteFilterOptions}
             />
           ) : (
             <HeadToHeadComparison

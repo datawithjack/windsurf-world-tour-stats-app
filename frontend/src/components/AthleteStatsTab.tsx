@@ -1,9 +1,9 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import AthleteDetailPanel from './AthleteDetailPanel';
 import { Trophy } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
-import Select from './ui/Select';
+import type { AthleteStatsResponse } from '../types';
 
 // Helper to get initials from a name
 const getInitials = (fullName: string): string => {
@@ -30,16 +30,114 @@ const getOrdinalSuffix = (n: number): string => {
   }
 };
 
+// Export function to extract filter options from athlete stats for use in parent component
+export const extractAthleteFilterOptions = (athleteStats: AthleteStatsResponse | null | undefined) => {
+  if (!athleteStats) {
+    return {
+      uniqueEliminations: [] as string[],
+      uniqueRounds: [] as string[],
+      uniqueHeats: [] as string[],
+      getRoundsForElimination: () => [] as string[],
+      getHeatsForRound: () => [] as string[],
+    };
+  }
+
+  // Combine all score data
+  const allScores = [
+    ...(athleteStats.heat_scores || []).map(s => ({
+      round: s.round_name,
+      heat: s.heat_number,
+      elimination: s.elimination_type
+    })),
+    ...(athleteStats.jump_scores || []).map(s => ({
+      round: s.round_name,
+      heat: s.heat_number,
+      elimination: s.elimination_type
+    })),
+    ...(athleteStats.wave_scores || []).map(s => ({
+      round: s.round_name,
+      heat: s.heat_number,
+      elimination: s.elimination_type
+    })),
+  ];
+
+  // Extract unique values
+  const uniqueEliminations = [...new Set(allScores.map(s => s.elimination).filter(Boolean))] as string[];
+  const uniqueRounds = [...new Set(allScores.map(s => s.round).filter(Boolean))].sort() as string[];
+  const uniqueHeats = [...new Set(allScores.map(s => s.heat).filter(Boolean))].sort() as string[];
+
+  // Build maps for cascading filters
+  const eliminationToRounds = new Map<string, Set<string>>();
+  const roundToHeats = new Map<string, Set<string>>();
+
+  allScores.forEach(score => {
+    // Map elimination to rounds
+    if (score.elimination && score.round) {
+      if (!eliminationToRounds.has(score.elimination)) {
+        eliminationToRounds.set(score.elimination, new Set());
+      }
+      eliminationToRounds.get(score.elimination)!.add(score.round);
+    }
+    // Also add to "All" elimination
+    if (score.round) {
+      if (!eliminationToRounds.has('')) {
+        eliminationToRounds.set('', new Set());
+      }
+      eliminationToRounds.get('')!.add(score.round);
+    }
+
+    // Map round to heats
+    if (score.round && score.heat) {
+      if (!roundToHeats.has(score.round)) {
+        roundToHeats.set(score.round, new Set());
+      }
+      roundToHeats.get(score.round)!.add(score.heat);
+    }
+    // Also add to "All" round
+    if (score.heat) {
+      if (!roundToHeats.has('')) {
+        roundToHeats.set('', new Set());
+      }
+      roundToHeats.get('')!.add(score.heat);
+    }
+  });
+
+  return {
+    uniqueEliminations,
+    uniqueRounds,
+    uniqueHeats,
+    getRoundsForElimination: (elimination: string) => {
+      const rounds = eliminationToRounds.get(elimination) || eliminationToRounds.get('') || new Set();
+      return [...rounds].sort();
+    },
+    getHeatsForRound: (round: string) => {
+      const heats = roundToHeats.get(round) || roundToHeats.get('') || new Set();
+      return [...heats].sort();
+    },
+  };
+};
+
 interface AthleteStatsTabProps {
   eventId: number;
   selectedAthleteId: number | null;
   sex: 'Men' | 'Women';
+  // Optional filter props - if not provided, no filtering is applied
+  eliminationFilter?: string;
+  roundFilter?: string;
+  heatFilter?: string;
+  // Callback to notify parent of filter options when data loads
+  onFilterOptionsChange?: (options: ReturnType<typeof extractAthleteFilterOptions>) => void;
 }
 
-const AthleteStatsTab = ({ eventId, selectedAthleteId, sex }: AthleteStatsTabProps) => {
-  // Filter state
-  const [roundFilter, setRoundFilter] = useState<string | null>(null);
-  const [heatNumberFilter, setHeatNumberFilter] = useState<string | null>(null);
+const AthleteStatsTab = ({
+  eventId,
+  selectedAthleteId,
+  sex,
+  eliminationFilter = '',
+  roundFilter = '',
+  heatFilter = '',
+  onFilterOptionsChange
+}: AthleteStatsTabProps) => {
   const [imageError, setImageError] = useState(false);
 
   // Reset image error when athlete changes
@@ -55,37 +153,25 @@ const AthleteStatsTab = ({ eventId, selectedAthleteId, sex }: AthleteStatsTabPro
     retry: 1,
   });
 
-  // Reset filters when athlete changes
+  // Extract filter options and notify parent when data changes
+  const filterOptions = useMemo(() => extractAthleteFilterOptions(athleteStats), [athleteStats]);
+
   useEffect(() => {
-    setRoundFilter(null);
-    setHeatNumberFilter(null);
-  }, [selectedAthleteId]);
+    if (onFilterOptionsChange && athleteStats) {
+      onFilterOptionsChange(filterOptions);
+    }
+  }, [filterOptions, onFilterOptionsChange, athleteStats]);
 
-  // Extract unique rounds and heat numbers from all score types
-  const filterOptions = useMemo(() => {
-    if (!athleteStats) return { rounds: [], heatNumbers: [] };
-
-    const allScores = [
-      ...(athleteStats.heat_scores || []),
-      ...(athleteStats.jump_scores || []),
-      ...(athleteStats.wave_scores || []),
-    ];
-
-    const rounds = [...new Set(allScores.map(s => s.round_name).filter(Boolean))].sort();
-    const heatNumbers = [...new Set(allScores.map(s => s.heat_number).filter(Boolean))].sort();
-
-    return { rounds, heatNumbers };
-  }, [athleteStats]);
-
-  // Filter the data based on selected filters
+  // Filter the data based on selected filters from props
   const filteredAthleteStats = useMemo(() => {
     if (!athleteStats) return null;
 
-    const filterScores = <T extends { round_name: string; heat_number: string }>(scores: T[] | undefined): T[] => {
+    const filterScores = <T extends { round_name: string; heat_number: string; elimination_type?: string | null }>(scores: T[] | undefined): T[] => {
       if (!scores) return [];
       return scores.filter(score => {
+        if (eliminationFilter && score.elimination_type !== eliminationFilter) return false;
         if (roundFilter && score.round_name !== roundFilter) return false;
-        if (heatNumberFilter && score.heat_number !== heatNumberFilter) return false;
+        if (heatFilter && score.heat_number !== heatFilter) return false;
         return true;
       });
     };
@@ -96,7 +182,7 @@ const AthleteStatsTab = ({ eventId, selectedAthleteId, sex }: AthleteStatsTabPro
       jump_scores: filterScores(athleteStats.jump_scores),
       wave_scores: filterScores(athleteStats.wave_scores),
     };
-  }, [athleteStats, roundFilter, heatNumberFilter]);
+  }, [athleteStats, eliminationFilter, roundFilter, heatFilter]);
 
   // Loading state
   if (isLoading) {
@@ -234,47 +320,7 @@ const AthleteStatsTab = ({ eventId, selectedAthleteId, sex }: AthleteStatsTabPro
         </div>
       </div>
 
-      {/* Round and Heat Filters */}
-      {(filterOptions.rounds.length > 0 || filterOptions.heatNumbers.length > 0) && (
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-sm text-gray-400">Filter by:</span>
-          {filterOptions.rounds.length > 0 && (
-            <Select
-              value={roundFilter || ''}
-              onChange={(e) => setRoundFilter(e.target.value || null)}
-            >
-              <option value="">All Rounds</option>
-              {filterOptions.rounds.map((round) => (
-                <option key={round} value={round}>{round}</option>
-              ))}
-            </Select>
-          )}
-          {filterOptions.heatNumbers.length > 0 && (
-            <Select
-              value={heatNumberFilter || ''}
-              onChange={(e) => setHeatNumberFilter(e.target.value || null)}
-            >
-              <option value="">All Heats</option>
-              {filterOptions.heatNumbers.map((heatNo) => (
-                <option key={heatNo} value={heatNo}>Heat {heatNo}</option>
-              ))}
-            </Select>
-          )}
-          {(roundFilter || heatNumberFilter) && (
-            <button
-              onClick={() => {
-                setRoundFilter(null);
-                setHeatNumberFilter(null);
-              }}
-              className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
-            >
-              Clear filters
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Athlete Stats Detail */}
+      {/* Athlete Stats Detail - filters are now in parent EventResultsPage */}
       <AthleteDetailPanel data={filteredAthleteStats!} />
     </div>
   );

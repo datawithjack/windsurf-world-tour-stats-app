@@ -17,7 +17,7 @@ from ..models import (
     RoundStat,
     AthleteListResponse, AthleteListItem, AthleteListMetadata,
     AthleteStatsResponse, AthleteProfile, AthleteSummaryStats,
-    BestHeatScore, BestJumpScore, BestWaveScore,
+    BestHeatScore, BestJumpScore, BestWaveScore, TiedJumpScore, TiedWaveScore,
     MoveTypeScore, HeatScore, JumpScore, WaveScore, AthleteStatsMetadata,
     HeatScoreBreakdown, BreakdownScore
 )
@@ -1002,9 +1002,11 @@ async def get_athlete_event_stats(
         detected_sex = profile_result['sex']
 
         # 3. Get best heat score with opponents
+        # Note: heat_id is the raw identifier, we also extract a display-friendly heat_number
         best_heat_query = """
             SELECT
                 hr.heat_id as heat,
+                hr.heat_id as heat_number,
                 ROUND(hr.result_total, 2) as score,
                 hp.round_name,
                 GROUP_CONCAT(DISTINCT opp_hr.athlete_name ORDER BY opp_hr.athlete_name SEPARATOR ', ') as opponents_str
@@ -1064,6 +1066,7 @@ async def get_athlete_event_stats(
         best_jump_query = """
             SELECT
                 s.heat_id as heat,
+                s.heat_id as heat_number,
                 ROUND(s.score, 2) as score,
                 hp.round_name,
                 COALESCE(st.Type_Name, s.type) as move,
@@ -1083,10 +1086,42 @@ async def get_athlete_event_stats(
         """
         best_jump_result = db.execute_query(best_jump_query, (athlete_id, event_id), fetch_one=True)
 
+        # 4b. Get ALL tied jump scores at the best score (for tied detection)
+        tied_jump_scores = []
+        has_multiple_tied_jumps = False
+        if best_jump_result and best_jump_result['score']:
+            tied_jumps_query = """
+                SELECT
+                    s.heat_id as heat,
+                    s.heat_id as heat_number,
+                    ROUND(s.score, 2) as score,
+                    hp.round_name,
+                    COALESCE(st.Type_Name, s.type) as move
+                FROM PWA_IWT_HEAT_SCORES s
+                JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND s.source = e.source
+                JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
+                LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
+                LEFT JOIN SCORE_TYPES st ON st.Type = TRIM(s.type)
+                WHERE asi.athlete_id = %s AND e.id = %s AND s.type != 'Wave'
+                  AND ROUND(s.score, 2) = %s
+                ORDER BY hp.round_name, s.heat_id
+            """
+            tied_results = db.execute_query(tied_jumps_query, (athlete_id, event_id, best_jump_result['score']))
+            if tied_results and len(tied_results) > 1:
+                has_multiple_tied_jumps = True
+                tied_jump_scores = [TiedJumpScore(
+                    score=row['score'],
+                    heat=row['heat'],
+                    heat_number=row['heat_number'],
+                    round_name=row.get('round_name'),
+                    move=row['move']
+                ) for row in tied_results]
+
         # 5. Get best wave score with opponents
         best_wave_query = """
             SELECT
                 s.heat_id as heat,
+                s.heat_id as heat_number,
                 ROUND(s.score, 2) as score,
                 hp.round_name,
                 GROUP_CONCAT(DISTINCT opp_s.athlete_name ORDER BY opp_s.athlete_name SEPARATOR ', ') as opponents_str
@@ -1103,6 +1138,34 @@ async def get_athlete_event_stats(
             LIMIT 1
         """
         best_wave_result = db.execute_query(best_wave_query, (athlete_id, event_id), fetch_one=True)
+
+        # 5b. Get ALL tied wave scores at the best score (for tied detection)
+        tied_wave_scores = []
+        has_multiple_tied_waves = False
+        if best_wave_result and best_wave_result['score']:
+            tied_waves_query = """
+                SELECT
+                    s.heat_id as heat,
+                    s.heat_id as heat_number,
+                    ROUND(s.score, 2) as score,
+                    hp.round_name
+                FROM PWA_IWT_HEAT_SCORES s
+                JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND s.source = e.source
+                JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
+                LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp ON hp.heat_id = s.heat_id
+                WHERE asi.athlete_id = %s AND e.id = %s AND s.type = 'Wave'
+                  AND ROUND(s.score, 2) = %s
+                ORDER BY hp.round_name, s.heat_id
+            """
+            tied_results = db.execute_query(tied_waves_query, (athlete_id, event_id, best_wave_result['score']))
+            if tied_results and len(tied_results) > 1:
+                has_multiple_tied_waves = True
+                tied_wave_scores = [TiedWaveScore(
+                    score=row['score'],
+                    heat=row['heat'],
+                    heat_number=row['heat_number'],
+                    round_name=row.get('round_name')
+                ) for row in tied_results]
 
         # 6. Get move type scores (includes Wave and all jump types)
         move_type_query = """
@@ -1155,14 +1218,20 @@ async def get_athlete_event_stats(
         """
         heat_scores_results = db.execute_query(heat_scores_query, (athlete_id, event_id))
 
-        # 8. Get all jump scores
+        # 8. Get all jump scores with elimination type
         jump_scores_query = """
             SELECT
                 s.heat_id as heat_number,
                 hp.round_name,
                 COALESCE(st.Type_Name, s.type) as move,
                 ROUND(s.score, 2) as score,
-                COALESCE(s.counting, FALSE) as counting
+                COALESCE(s.counting, FALSE) as counting,
+                CASE
+                    WHEN hp.elimination_name IS NULL OR hp.elimination_name = '' THEN NULL
+                    WHEN LOWER(hp.elimination_name) LIKE '%double elimination%' THEN 'Double'
+                    WHEN LOWER(hp.elimination_name) LIKE '%elimination%' THEN 'Single'
+                    ELSE NULL
+                END as elimination_type
             FROM PWA_IWT_HEAT_SCORES s
             JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND s.source = e.source
             JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
@@ -1173,13 +1242,19 @@ async def get_athlete_event_stats(
         """
         jump_scores_results = db.execute_query(jump_scores_query, (athlete_id, event_id))
 
-        # 9. Get all wave scores
+        # 9. Get all wave scores with elimination type
         wave_scores_query = """
             SELECT
                 s.heat_id as heat_number,
                 hp.round_name,
                 ROUND(s.score, 2) as score,
-                COALESCE(s.counting, FALSE) as counting
+                COALESCE(s.counting, FALSE) as counting,
+                CASE
+                    WHEN hp.elimination_name IS NULL OR hp.elimination_name = '' THEN NULL
+                    WHEN LOWER(hp.elimination_name) LIKE '%double elimination%' THEN 'Double'
+                    WHEN LOWER(hp.elimination_name) LIKE '%elimination%' THEN 'Single'
+                    ELSE NULL
+                END as elimination_type
             FROM PWA_IWT_HEAT_SCORES s
             JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND s.source = e.source
             JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
@@ -1208,25 +1283,32 @@ async def get_athlete_event_stats(
         best_heat_score = BestHeatScore(
             score=best_heat_result['score'],
             heat=best_heat_result['heat'],
+            heat_number=best_heat_result.get('heat_number'),
             round_name=best_heat_result.get('round_name'),
             opponents=parse_opponents(best_heat_result.get('opponents_str')),
             breakdown=best_heat_breakdown
-        ) if best_heat_result else BestHeatScore(score=0.0, heat='', round_name=None, opponents=None, breakdown=None)
+        ) if best_heat_result else BestHeatScore(score=0.0, heat='', heat_number=None, round_name=None, opponents=None, breakdown=None)
 
         best_jump_score = BestJumpScore(
             score=best_jump_result['score'],
             heat=best_jump_result['heat'],
+            heat_number=best_jump_result.get('heat_number'),
             round_name=best_jump_result.get('round_name'),
             move=best_jump_result['move'],
-            opponents=parse_opponents(best_jump_result.get('opponents_str'))
-        ) if best_jump_result else BestJumpScore(score=0.0, heat='', round_name=None, move='', opponents=None)
+            opponents=parse_opponents(best_jump_result.get('opponents_str')),
+            has_multiple_tied=has_multiple_tied_jumps,
+            all_tied_scores=tied_jump_scores if has_multiple_tied_jumps else None
+        ) if best_jump_result else BestJumpScore(score=0.0, heat='', heat_number=None, round_name=None, move='', opponents=None, has_multiple_tied=False, all_tied_scores=None)
 
         best_wave_score = BestWaveScore(
             score=best_wave_result['score'],
             heat=best_wave_result['heat'],
+            heat_number=best_wave_result.get('heat_number'),
             round_name=best_wave_result.get('round_name'),
-            opponents=parse_opponents(best_wave_result.get('opponents_str'))
-        ) if best_wave_result else BestWaveScore(score=0.0, heat='', round_name=None, opponents=None)
+            opponents=parse_opponents(best_wave_result.get('opponents_str')),
+            has_multiple_tied=has_multiple_tied_waves,
+            all_tied_scores=tied_wave_scores if has_multiple_tied_waves else None
+        ) if best_wave_result else BestWaveScore(score=0.0, heat='', heat_number=None, round_name=None, opponents=None, has_multiple_tied=False, all_tied_scores=None)
 
         summary_stats = AthleteSummaryStats(
             overall_position=profile_result['overall_position'],

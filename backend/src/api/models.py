@@ -387,10 +387,25 @@ class BestHeatScore(BaseModel):
     Best heat score with context
     """
     score: float = Field(..., description="Total heat score")
-    heat: str = Field(..., description="Heat identifier")
+    heat: str = Field(..., description="Heat identifier (raw heat_id)")
+    heat_number: Optional[str] = Field(None, description="Display-friendly heat number (e.g., '50a', '21b')")
     round_name: Optional[str] = Field(None, description="Round name (e.g., 'Final', 'Semi-Finals')")
     opponents: Optional[List[str]] = Field(None, description="List of opponent names in that heat")
     breakdown: Optional["HeatScoreBreakdown"] = Field(None, description="Breakdown of counting scores (top 2 waves + top 2 jumps)")
+
+    class Config:
+        from_attributes = True
+
+
+class TiedJumpScore(BaseModel):
+    """
+    Tied jump score entry for an athlete (when they have multiple best jumps with same score)
+    """
+    score: float = Field(..., description="Jump score")
+    heat: str = Field(..., description="Heat identifier (raw heat_id)")
+    heat_number: Optional[str] = Field(None, description="Display-friendly heat number (e.g., '50a', '21b')")
+    round_name: Optional[str] = Field(None, description="Round name (e.g., 'Final', 'Semi-Finals')")
+    move: str = Field(..., description="Move type name")
 
     class Config:
         from_attributes = True
@@ -401,10 +416,26 @@ class BestJumpScore(BaseModel):
     Best jump score with context
     """
     score: float = Field(..., description="Jump score")
-    heat: str = Field(..., description="Heat identifier")
+    heat: str = Field(..., description="Heat identifier (raw heat_id)")
+    heat_number: Optional[str] = Field(None, description="Display-friendly heat number (e.g., '50a', '21b')")
     round_name: Optional[str] = Field(None, description="Round name (e.g., 'Final', 'Semi-Finals')")
     move: str = Field(..., description="Move type name (decoded from codes like B, F, P)")
     opponents: Optional[List[str]] = Field(None, description="List of opponent names in that heat")
+    has_multiple_tied: bool = Field(False, description="True if athlete has multiple jumps with same best score")
+    all_tied_scores: Optional[List[TiedJumpScore]] = Field(None, description="All tied jump scores if multiple")
+
+    class Config:
+        from_attributes = True
+
+
+class TiedWaveScore(BaseModel):
+    """
+    Tied wave score entry for an athlete (when they have multiple best waves with same score)
+    """
+    score: float = Field(..., description="Wave score")
+    heat: str = Field(..., description="Heat identifier (raw heat_id)")
+    heat_number: Optional[str] = Field(None, description="Display-friendly heat number (e.g., '50a', '21b')")
+    round_name: Optional[str] = Field(None, description="Round name (e.g., 'Final', 'Semi-Finals')")
 
     class Config:
         from_attributes = True
@@ -415,9 +446,12 @@ class BestWaveScore(BaseModel):
     Best wave score with context
     """
     score: float = Field(..., description="Wave score")
-    heat: str = Field(..., description="Heat identifier")
+    heat: str = Field(..., description="Heat identifier (raw heat_id)")
+    heat_number: Optional[str] = Field(None, description="Display-friendly heat number (e.g., '50a', '21b')")
     round_name: Optional[str] = Field(None, description="Round name (e.g., 'Final', 'Semi-Finals')")
     opponents: Optional[List[str]] = Field(None, description="List of opponent names in that heat")
+    has_multiple_tied: bool = Field(False, description="True if athlete has multiple waves with same best score")
+    all_tied_scores: Optional[List[TiedWaveScore]] = Field(None, description="All tied wave scores if multiple")
 
     class Config:
         from_attributes = True
@@ -480,6 +514,7 @@ class JumpScore(BaseModel):
     move: str = Field(..., description="Move type performed (decoded from codes like B, F, P)")
     score: float = Field(..., description="Individual jump score")
     counting: bool = Field(..., description="Whether this score counted toward heat total")
+    elimination_type: Optional[str] = Field(None, description="Either 'Single' or 'Double' (null if unknown)")
 
     class Config:
         from_attributes = True
@@ -494,6 +529,7 @@ class WaveScore(BaseModel):
     score: float = Field(..., description="Individual wave score")
     counting: bool = Field(..., description="Whether this score counted toward heat total")
     wave_index: Optional[int] = Field(None, description="Wave index number (optional)")
+    elimination_type: Optional[str] = Field(None, description="Either 'Single' or 'Double' (null if unknown)")
 
     class Config:
         from_attributes = True
