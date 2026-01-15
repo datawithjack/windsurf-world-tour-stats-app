@@ -1007,6 +1007,44 @@ async def get_athlete_event_stats(
         """
         best_heat_result = db.execute_query(best_heat_query, (athlete_id, event_id), fetch_one=True)
 
+        # 3b. Get breakdown for best heat score (top 2 counting waves + top 2 counting jumps)
+        best_heat_breakdown = None
+        if best_heat_result:
+            original_heat_id = best_heat_result['heat']
+
+            # Get top 2 counting wave scores
+            breakdown_waves_query = """
+                SELECT s.score, 'Wave' as move_type
+                FROM PWA_IWT_HEAT_SCORES s
+                INNER JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND s.source = e.source
+                INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
+                WHERE s.heat_id = %s AND asi.athlete_id = %s AND e.id = %s
+                  AND s.type = 'Wave' AND COALESCE(s.counting, FALSE) = TRUE
+                ORDER BY s.score DESC
+                LIMIT 2
+            """
+            wave_breakdown = db.execute_query(breakdown_waves_query, (original_heat_id, athlete_id, event_id))
+
+            # Get top 2 counting jump scores
+            breakdown_jumps_query = """
+                SELECT s.score, COALESCE(st.Type_Name, s.type) as move_type
+                FROM PWA_IWT_HEAT_SCORES s
+                INNER JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND s.source = e.source
+                INNER JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
+                LEFT JOIN SCORE_TYPES st ON st.Type = TRIM(s.type)
+                WHERE s.heat_id = %s AND asi.athlete_id = %s AND e.id = %s
+                  AND s.type != 'Wave' AND COALESCE(s.counting, FALSE) = TRUE
+                ORDER BY s.score DESC
+                LIMIT 2
+            """
+            jump_breakdown = db.execute_query(breakdown_jumps_query, (original_heat_id, athlete_id, event_id))
+
+            if wave_breakdown or jump_breakdown:
+                best_heat_breakdown = HeatScoreBreakdown(
+                    waves=[BreakdownScore(**row) for row in wave_breakdown] if wave_breakdown else [],
+                    jumps=[BreakdownScore(**row) for row in jump_breakdown] if jump_breakdown else []
+                )
+
         # 4. Get best jump score with opponents and move type
         best_jump_query = """
             SELECT
@@ -1156,8 +1194,9 @@ async def get_athlete_event_stats(
             score=best_heat_result['score'],
             heat=best_heat_result['heat'],
             round_name=best_heat_result.get('round_name'),
-            opponents=parse_opponents(best_heat_result.get('opponents_str'))
-        ) if best_heat_result else BestHeatScore(score=0.0, heat='', round_name=None, opponents=None)
+            opponents=parse_opponents(best_heat_result.get('opponents_str')),
+            breakdown=best_heat_breakdown
+        ) if best_heat_result else BestHeatScore(score=0.0, heat='', round_name=None, opponents=None, breakdown=None)
 
         best_jump_score = BestJumpScore(
             score=best_jump_result['score'],

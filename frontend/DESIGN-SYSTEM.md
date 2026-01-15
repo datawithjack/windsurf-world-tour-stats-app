@@ -676,6 +676,43 @@ Replaces dropdown selectors (10/25/50 rows) with progressive disclosure. Better 
 - When users typically need all data at once
 - When server-side pagination is required (use proper pagination instead)
 
+### Dynamic Grid for Summary Cards
+When displaying summary cards (Best Heat/Jump/Wave Score), the grid should dynamically adjust based on how many cards are present. This ensures cards expand to fill available space rather than leaving empty columns.
+
+**Pattern:**
+```jsx
+// Count visible cards
+const cardCount = [bestHeatScore, bestJumpScore, bestWaveScore].filter(Boolean).length;
+
+// Dynamic grid classes
+const gridClasses = cardCount === 3
+  ? 'sm:grid-cols-2 lg:grid-cols-3'  // 3 cards: 2 cols on tablet, 3 on desktop
+  : cardCount === 2
+  ? 'sm:grid-cols-2'                  // 2 cards: 2 cols (50% each)
+  : '';                               // 1 card: full width
+
+<div className={`grid grid-cols-1 ${gridClasses} gap-6 items-stretch`}>
+  {bestHeatScore && <Card>...</Card>}
+  {bestJumpScore && <Card>...</Card>}
+  {bestWaveScore && <Card>...</Card>}
+</div>
+```
+
+**Behavior:**
+| Cards | Mobile | Tablet (sm) | Desktop (lg) |
+|-------|--------|-------------|--------------|
+| 3 | 1 col | 2 cols | 3 cols |
+| 2 | 1 col | 2 cols (50% each) | 2 cols (50% each) |
+| 1 | 1 col (100%) | 1 col (100%) | 1 col (100%) |
+
+**Used in:**
+- `StatsSummaryCards.tsx` (Event Stats tab)
+- `AthleteDetailPanel.tsx` (Athlete Stats tab)
+
+**Why:** Events without jump data (like Live Heats events) should show only Heat + Wave cards that expand to fill the space, not leave a gap where the Jump card would be.
+
+---
+
 ### Stat Cards (Data Visualization)
 For displaying individual metrics and statistics.
 

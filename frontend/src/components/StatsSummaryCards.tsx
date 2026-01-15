@@ -204,35 +204,45 @@ const StatsSummaryCards = ({
   bestJumpScore,
   bestWaveScore,
 }: StatsSummaryCardsProps) => {
+  // Count how many cards will be displayed
+  const cardCount = [bestHeatScore, bestJumpScore, bestWaveScore].filter(Boolean).length;
+
+  // Dynamic grid: 3 cols for 3 cards, 2 cols for 2 cards, 1 col for 1 card
+  const gridClasses = cardCount === 3
+    ? 'sm:grid-cols-2 lg:grid-cols-3'
+    : cardCount === 2
+    ? 'sm:grid-cols-2'
+    : '';
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-        {/* Best Heat Score */}
-        {bestHeatScore && (
-          <FlipCard
-            title="Best Heat Score"
-            scoreData={bestHeatScore}
-            type="heat"
-          />
-        )}
+    <div className={`grid grid-cols-1 ${gridClasses} gap-6 items-stretch`}>
+      {/* Best Heat Score */}
+      {bestHeatScore && (
+        <FlipCard
+          title="Best Heat Score"
+          scoreData={bestHeatScore}
+          type="heat"
+        />
+      )}
 
-        {/* Best Jump Score */}
-        {bestJumpScore && (
-          <FlipCard
-            title="Best Jump Score"
-            scoreData={bestJumpScore}
-            type="jump"
-          />
-        )}
+      {/* Best Jump Score */}
+      {bestJumpScore && (
+        <FlipCard
+          title="Best Jump Score"
+          scoreData={bestJumpScore}
+          type="jump"
+        />
+      )}
 
-        {/* Best Wave Score */}
-        {bestWaveScore && (
-          <FlipCard
-            title="Best Wave Score"
-            scoreData={bestWaveScore}
-            type="wave"
-          />
-        )}
-      </div>
+      {/* Best Wave Score */}
+      {bestWaveScore && (
+        <FlipCard
+          title="Best Wave Score"
+          scoreData={bestWaveScore}
+          type="wave"
+        />
+      )}
+    </div>
   );
 };
 

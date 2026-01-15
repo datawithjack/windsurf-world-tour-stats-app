@@ -390,6 +390,7 @@ class BestHeatScore(BaseModel):
     heat: str = Field(..., description="Heat identifier")
     round_name: Optional[str] = Field(None, description="Round name (e.g., 'Final', 'Semi-Finals')")
     opponents: Optional[List[str]] = Field(None, description="List of opponent names in that heat")
+    breakdown: Optional["HeatScoreBreakdown"] = Field(None, description="Breakdown of counting scores (top 2 waves + top 2 jumps)")
 
     class Config:
         from_attributes = True

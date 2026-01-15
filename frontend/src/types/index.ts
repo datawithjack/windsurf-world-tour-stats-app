@@ -245,6 +245,7 @@ export interface AthleteSummaryStats {
     heat: string;
     round_name: string;
     opponents?: string[] | null;
+    breakdown?: HeatScoreBreakdown | null;
   } | null;
   best_jump_score: {
     score: number;
