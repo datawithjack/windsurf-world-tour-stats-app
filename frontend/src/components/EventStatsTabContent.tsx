@@ -114,9 +114,12 @@ const transformScoreData = (statsData: EventStatsResponse) => ({
 
 // Extract unique rounds, heats, and elimination types from score data
 // Only includes rounds/heats that have actual wave or jump score data (not just heat totals)
+// Builds cascading maps: elimination → rounds → heats
 export const extractFilterOptions = (statsData: EventStatsResponse) => {
   const roundHeatsMap = new Map<string, Set<string>>();
+  const eliminationRoundsMap = new Map<string, Set<string>>();
   const allHeats = new Set<string>();
+  const allRounds = new Set<string>();
   const allEliminationTypes = new Set<string>();
 
   // Only use wave and jump scores - these represent actual detailed score data
@@ -129,17 +132,25 @@ export const extractFilterOptions = (statsData: EventStatsResponse) => {
   scoresWithData.forEach((score) => {
     const round = score.round_name || '';
     const heat = score.heat_number || '';
-    const eliminationType = score.elimination_type;
+    const eliminationType = score.elimination_type || '';
 
     // Track elimination types (only non-null values from PWA events)
     if (eliminationType) {
       allEliminationTypes.add(eliminationType);
+      // Build elimination → rounds map
+      if (round) {
+        if (!eliminationRoundsMap.has(eliminationType)) {
+          eliminationRoundsMap.set(eliminationType, new Set());
+        }
+        eliminationRoundsMap.get(eliminationType)!.add(round);
+      }
     }
 
     // Only add round if it has a valid heat with score data
     if (heat) {
       allHeats.add(heat);
       if (round) {
+        allRounds.add(round);
         if (!roundHeatsMap.has(round)) {
           roundHeatsMap.set(round, new Set());
         }
@@ -163,7 +174,7 @@ export const extractFilterOptions = (statsData: EventStatsResponse) => {
     return a.localeCompare(b);
   });
 
-  const uniqueRounds = sortRounds(Array.from(roundHeatsMap.keys()));
+  const uniqueRounds = sortRounds(Array.from(allRounds));
   const uniqueHeats = sortHeats(Array.from(allHeats));
   // Sort elimination types: Single first, then Double
   const uniqueEliminations = Array.from(allEliminationTypes).sort((a, b) => {
@@ -177,6 +188,13 @@ export const extractFilterOptions = (statsData: EventStatsResponse) => {
     uniqueHeats,
     uniqueEliminations,
     roundHeatsMap,
+    eliminationRoundsMap,
+    // Get rounds available for a given elimination type (or all rounds if no filter)
+    getRoundsForElimination: (elimination: string) => {
+      if (!elimination) return uniqueRounds;
+      return sortRounds(Array.from(eliminationRoundsMap.get(elimination) || []));
+    },
+    // Get heats available for a given round (or all heats if no filter)
     getHeatsForRound: (round: string) => {
       if (!round) return uniqueHeats;
       return sortHeats(Array.from(roundHeatsMap.get(round) || []));

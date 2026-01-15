@@ -99,15 +99,40 @@ const EventResultsPage = () => {
 
   // Derive filter options from stats data
   const filterOptions = useMemo(
-    () => statsData ? extractFilterOptions(statsData) : { uniqueRounds: [], uniqueHeats: [], uniqueEliminations: [], getHeatsForRound: () => [] },
+    () => statsData ? extractFilterOptions(statsData) : {
+      uniqueRounds: [],
+      uniqueHeats: [],
+      uniqueEliminations: [],
+      getHeatsForRound: () => [],
+      getRoundsForElimination: () => []
+    },
     [statsData]
   );
 
-  // Get available heats based on selected round
+  // Get available rounds based on selected elimination (cascading filter)
+  const availableRounds = useMemo(
+    () => filterOptions.getRoundsForElimination(eliminationFilter),
+    [filterOptions, eliminationFilter]
+  );
+
+  // Get available heats based on selected round (cascading filter)
   const availableHeats = useMemo(
     () => filterOptions.getHeatsForRound(roundFilter),
     [filterOptions, roundFilter]
   );
+
+  // Handle elimination filter change - clear round and heat if not valid
+  const handleEliminationChange = useCallback((newElimination: string) => {
+    setEliminationFilter(newElimination);
+    // If switching elimination, check if current round is still valid
+    if (newElimination && roundFilter) {
+      const roundsForElimination = filterOptions.getRoundsForElimination(newElimination);
+      if (!roundsForElimination.includes(roundFilter)) {
+        setRoundFilter('');
+        setHeatFilter('');
+      }
+    }
+  }, [filterOptions, roundFilter]);
 
   // Handle round filter change - clear heat if not valid for new round
   const handleRoundChange = useCallback((newRound: string) => {
@@ -358,25 +383,15 @@ const EventResultsPage = () => {
               <option value="women">Women</option>
             </Select>
 
-            {/* Round/Heat/Elimination Filters - only show on Event Stats tab */}
+            {/* Cascading Filters - only show on Event Stats tab */}
+            {/* Order: Gender → Elimination → Round → Heat (each filters the next) */}
             {activeTab === 'event-stats' && filterOptions.uniqueRounds.length > 0 && (
               <>
-                <Select
-                  value={roundFilter}
-                  onChange={(e) => handleRoundChange(e.target.value)}
-                  aria-label="Filter by round"
-                >
-                  <option value="">All Rounds</option>
-                  {filterOptions.uniqueRounds.map((round) => (
-                    <option key={round} value={round}>{round}</option>
-                  ))}
-                </Select>
-
                 {/* Elimination filter - only show if there are elimination types (PWA events) */}
                 {filterOptions.uniqueEliminations.length > 0 && (
                   <Select
                     value={eliminationFilter}
-                    onChange={(e) => setEliminationFilter(e.target.value)}
+                    onChange={(e) => handleEliminationChange(e.target.value)}
                     aria-label="Filter by elimination"
                   >
                     <option value="">All Eliminations</option>
@@ -386,6 +401,19 @@ const EventResultsPage = () => {
                   </Select>
                 )}
 
+                {/* Round filter - options depend on selected elimination */}
+                <Select
+                  value={roundFilter}
+                  onChange={(e) => handleRoundChange(e.target.value)}
+                  aria-label="Filter by round"
+                >
+                  <option value="">All Rounds</option>
+                  {availableRounds.map((round) => (
+                    <option key={round} value={round}>{round}</option>
+                  ))}
+                </Select>
+
+                {/* Heat filter - options depend on selected round */}
                 <Select
                   value={heatFilter}
                   onChange={(e) => setHeatFilter(e.target.value)}
@@ -400,9 +428,9 @@ const EventResultsPage = () => {
                 {(roundFilter || heatFilter || eliminationFilter) && (
                   <button
                     onClick={() => {
+                      setEliminationFilter('');
                       setRoundFilter('');
                       setHeatFilter('');
-                      setEliminationFilter('');
                     }}
                     className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors px-2"
                   >
