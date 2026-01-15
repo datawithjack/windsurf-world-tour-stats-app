@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { AthleteStatsResponse, HeatScoreBreakdown, TiedJumpScore, TiedWaveScore } from '../types';
@@ -252,24 +252,89 @@ const ExpandableBestWaveCard = ({ score, roundName, heatNumber, opponents, hasMu
 
 interface AthleteDetailPanelProps {
   data: AthleteStatsResponse;
+  /** Whether filters are currently applied (to trigger summary recalculation) */
+  hasActiveFilters?: boolean;
 }
 
 const DEFAULT_TABLE_ROWS = 10;
 
-const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
+const AthleteDetailPanel = ({ data, hasActiveFilters = false }: AthleteDetailPanelProps) => {
   const { summary_stats, move_type_scores, heat_scores, jump_scores, wave_scores } = data;
+
+  // Recalculate summary stats from filtered data when filters are active
+  const effectiveSummaryStats = useMemo(() => {
+    // If no filters are active, use the API-provided summary stats
+    if (!hasActiveFilters) {
+      return summary_stats;
+    }
+
+    // Find best heat score from filtered heat_scores
+    const bestHeatFromFiltered = heat_scores?.reduce((best, current) => {
+      if (current.score && (!best || (current.score > (best.score || 0)))) {
+        return current;
+      }
+      return best;
+    }, null as typeof heat_scores[0] | null);
+
+    // Find best jump score from filtered jump_scores
+    const bestJumpFromFiltered = jump_scores?.reduce((best, current) => {
+      if (current.score && (!best || current.score > (best.score || 0))) {
+        return current;
+      }
+      return best;
+    }, null as typeof jump_scores[0] | null);
+
+    // Find best wave score from filtered wave_scores
+    const bestWaveFromFiltered = wave_scores?.reduce((best, current) => {
+      if (current.score && (!best || current.score > (best.score || 0))) {
+        return current;
+      }
+      return best;
+    }, null as typeof wave_scores[0] | null);
+
+    return {
+      ...summary_stats,
+      best_heat_score: bestHeatFromFiltered ? {
+        score: bestHeatFromFiltered.score || 0,
+        heat: bestHeatFromFiltered.heat_number,
+        heat_number: bestHeatFromFiltered.heat_number,
+        round_name: bestHeatFromFiltered.round_name,
+        opponents: null, // Not available in filtered data
+        breakdown: null, // Not available in filtered data
+      } : summary_stats.best_heat_score,
+      best_jump_score: bestJumpFromFiltered ? {
+        score: bestJumpFromFiltered.score,
+        heat: bestJumpFromFiltered.heat_number,
+        heat_number: bestJumpFromFiltered.heat_number,
+        round_name: bestJumpFromFiltered.round_name,
+        move: bestJumpFromFiltered.move,
+        opponents: null,
+        has_multiple_tied: false,
+        all_tied_scores: null,
+      } : summary_stats.best_jump_score,
+      best_wave_score: bestWaveFromFiltered ? {
+        score: bestWaveFromFiltered.score,
+        heat: bestWaveFromFiltered.heat_number,
+        heat_number: bestWaveFromFiltered.heat_number,
+        round_name: bestWaveFromFiltered.round_name,
+        opponents: null,
+        has_multiple_tied: false,
+        all_tied_scores: null,
+      } : summary_stats.best_wave_score,
+    };
+  }, [hasActiveFilters, summary_stats, heat_scores, jump_scores, wave_scores]);
 
   // State for expandable tables
   const [jumpScoresExpanded, setJumpScoresExpanded] = useState(false);
   const [waveScoresExpanded, setWaveScoresExpanded] = useState(false);
 
   // Check if jump/wave data exists (score > 0)
-  const hasJumpData = summary_stats.best_jump_score &&
-    summary_stats.best_jump_score.score != null &&
-    summary_stats.best_jump_score.score > 0;
-  const hasWaveData = summary_stats.best_wave_score &&
-    summary_stats.best_wave_score.score != null &&
-    summary_stats.best_wave_score.score > 0;
+  const hasJumpData = effectiveSummaryStats.best_jump_score &&
+    effectiveSummaryStats.best_jump_score.score != null &&
+    effectiveSummaryStats.best_jump_score.score > 0;
+  const hasWaveData = effectiveSummaryStats.best_wave_score &&
+    effectiveSummaryStats.best_wave_score.score != null &&
+    effectiveSummaryStats.best_wave_score.score > 0;
   const hasJumpScores = jump_scores && jump_scores.length > 0;
   const hasWaveScores = wave_scores && wave_scores.length > 0;
 
@@ -326,13 +391,13 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
         hasJumpData || hasWaveData ? 'sm:grid-cols-2' : ''
       }`}>
         {/* Best Heat Score - Expandable */}
-        {summary_stats.best_heat_score && summary_stats.best_heat_score.score != null ? (
+        {effectiveSummaryStats.best_heat_score && effectiveSummaryStats.best_heat_score.score != null ? (
           <ExpandableBestHeatCard
-            score={summary_stats.best_heat_score.score}
-            roundName={summary_stats.best_heat_score.round_name}
-            heatNumber={summary_stats.best_heat_score.heat_number}
-            opponents={summary_stats.best_heat_score.opponents}
-            breakdown={summary_stats.best_heat_score.breakdown}
+            score={effectiveSummaryStats.best_heat_score.score}
+            roundName={effectiveSummaryStats.best_heat_score.round_name}
+            heatNumber={effectiveSummaryStats.best_heat_score.heat_number}
+            opponents={effectiveSummaryStats.best_heat_score.opponents}
+            breakdown={effectiveSummaryStats.best_heat_score.breakdown}
           />
         ) : (
           <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4 sm:p-6">
@@ -346,25 +411,25 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
         {/* Best Jump Score - Expandable with tied scores */}
         {hasJumpData && (
           <ExpandableBestJumpCard
-            score={summary_stats.best_jump_score!.score}
-            roundName={summary_stats.best_jump_score!.round_name}
-            heatNumber={summary_stats.best_jump_score!.heat_number}
-            move={summary_stats.best_jump_score!.move}
-            opponents={summary_stats.best_jump_score!.opponents}
-            hasMultipleTied={summary_stats.best_jump_score!.has_multiple_tied}
-            allTiedScores={summary_stats.best_jump_score!.all_tied_scores}
+            score={effectiveSummaryStats.best_jump_score!.score}
+            roundName={effectiveSummaryStats.best_jump_score!.round_name}
+            heatNumber={effectiveSummaryStats.best_jump_score!.heat_number}
+            move={effectiveSummaryStats.best_jump_score!.move}
+            opponents={effectiveSummaryStats.best_jump_score!.opponents}
+            hasMultipleTied={effectiveSummaryStats.best_jump_score!.has_multiple_tied}
+            allTiedScores={effectiveSummaryStats.best_jump_score!.all_tied_scores}
           />
         )}
 
         {/* Best Wave Score - Expandable with tied scores */}
         {hasWaveData && (
           <ExpandableBestWaveCard
-            score={summary_stats.best_wave_score!.score}
-            roundName={summary_stats.best_wave_score!.round_name}
-            heatNumber={summary_stats.best_wave_score!.heat_number}
-            opponents={summary_stats.best_wave_score!.opponents}
-            hasMultipleTied={summary_stats.best_wave_score!.has_multiple_tied}
-            allTiedScores={summary_stats.best_wave_score!.all_tied_scores}
+            score={effectiveSummaryStats.best_wave_score!.score}
+            roundName={effectiveSummaryStats.best_wave_score!.round_name}
+            heatNumber={effectiveSummaryStats.best_wave_score!.heat_number}
+            opponents={effectiveSummaryStats.best_wave_score!.opponents}
+            hasMultipleTied={effectiveSummaryStats.best_wave_score!.has_multiple_tied}
+            allTiedScores={effectiveSummaryStats.best_wave_score!.all_tied_scores}
           />
         )}
       </div>
@@ -380,6 +445,7 @@ const AthleteDetailPanel = ({ data }: AthleteDetailPanelProps) => {
         <FeatureCard title="Heat Scores" isLoading={false}>
           <AthleteHeatScoresChart data={sortedHeatScores.map(h => ({
             roundName: h.round_name,
+            heatNumber: h.heat_number,
             score: h.score,
             type: h.elimination_type
           }))} />

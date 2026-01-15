@@ -321,7 +321,10 @@ const AthleteStatsTab = ({
       </div>
 
       {/* Athlete Stats Detail - filters are now in parent EventResultsPage */}
-      <AthleteDetailPanel data={filteredAthleteStats!} />
+      <AthleteDetailPanel
+        data={filteredAthleteStats!}
+        hasActiveFilters={!!(eliminationFilter || roundFilter || heatFilter)}
+      />
     </div>
   );
 };

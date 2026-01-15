@@ -1002,11 +1002,14 @@ async def get_athlete_event_stats(
         detected_sex = profile_result['sex']
 
         # 3. Get best heat score with opponents
-        # Note: heat_id is the raw identifier, we also extract a display-friendly heat_number
+        # Note: heat_id is the raw identifier, we also extract a display-friendly heat_number (stripped of event prefix)
         best_heat_query = """
             SELECT
                 hr.heat_id as heat,
-                hr.heat_id as heat_number,
+                CASE
+                    WHEN hr.source = 'PWA' THEN SUBSTRING_INDEX(hr.heat_id, '_', -1)
+                    ELSE hr.heat_id
+                END as heat_number,
                 ROUND(hr.result_total, 2) as score,
                 hp.round_name,
                 GROUP_CONCAT(DISTINCT opp_hr.athlete_name ORDER BY opp_hr.athlete_name SEPARATOR ', ') as opponents_str
@@ -1018,7 +1021,7 @@ async def get_athlete_event_stats(
                 ON opp_hr.heat_id = hr.heat_id
                 AND opp_hr.athlete_id != hr.athlete_id
             WHERE asi.athlete_id = %s AND e.id = %s
-            GROUP BY hr.heat_id, hr.result_total, hp.round_name
+            GROUP BY hr.heat_id, hr.result_total, hp.round_name, hr.source
             ORDER BY hr.result_total DESC
             LIMIT 1
         """
@@ -1066,7 +1069,10 @@ async def get_athlete_event_stats(
         best_jump_query = """
             SELECT
                 s.heat_id as heat,
-                s.heat_id as heat_number,
+                CASE
+                    WHEN s.source = 'PWA' THEN SUBSTRING_INDEX(s.heat_id, '_', -1)
+                    ELSE s.heat_id
+                END as heat_number,
                 ROUND(s.score, 2) as score,
                 hp.round_name,
                 COALESCE(st.Type_Name, s.type) as move,
@@ -1080,7 +1086,7 @@ async def get_athlete_event_stats(
                 ON opp_s.heat_id = s.heat_id
                 AND opp_s.athlete_id != s.athlete_id
             WHERE asi.athlete_id = %s AND e.id = %s AND s.type != 'Wave'
-            GROUP BY s.heat_id, s.score, s.type, hp.round_name, st.Type_Name
+            GROUP BY s.heat_id, s.score, s.type, hp.round_name, st.Type_Name, s.source
             ORDER BY s.score DESC
             LIMIT 1
         """
@@ -1093,7 +1099,10 @@ async def get_athlete_event_stats(
             tied_jumps_query = """
                 SELECT
                     s.heat_id as heat,
-                    s.heat_id as heat_number,
+                    CASE
+                        WHEN s.source = 'PWA' THEN SUBSTRING_INDEX(s.heat_id, '_', -1)
+                        ELSE s.heat_id
+                    END as heat_number,
                     ROUND(s.score, 2) as score,
                     hp.round_name,
                     COALESCE(st.Type_Name, s.type) as move
@@ -1121,7 +1130,10 @@ async def get_athlete_event_stats(
         best_wave_query = """
             SELECT
                 s.heat_id as heat,
-                s.heat_id as heat_number,
+                CASE
+                    WHEN s.source = 'PWA' THEN SUBSTRING_INDEX(s.heat_id, '_', -1)
+                    ELSE s.heat_id
+                END as heat_number,
                 ROUND(s.score, 2) as score,
                 hp.round_name,
                 GROUP_CONCAT(DISTINCT opp_s.athlete_name ORDER BY opp_s.athlete_name SEPARATOR ', ') as opponents_str
@@ -1133,7 +1145,7 @@ async def get_athlete_event_stats(
                 ON opp_s.heat_id = s.heat_id
                 AND opp_s.athlete_id != s.athlete_id
             WHERE asi.athlete_id = %s AND e.id = %s AND s.type = 'Wave'
-            GROUP BY s.heat_id, s.score, hp.round_name
+            GROUP BY s.heat_id, s.score, hp.round_name, s.source
             ORDER BY s.score DESC
             LIMIT 1
         """
@@ -1146,7 +1158,10 @@ async def get_athlete_event_stats(
             tied_waves_query = """
                 SELECT
                     s.heat_id as heat,
-                    s.heat_id as heat_number,
+                    CASE
+                        WHEN s.source = 'PWA' THEN SUBSTRING_INDEX(s.heat_id, '_', -1)
+                        ELSE s.heat_id
+                    END as heat_number,
                     ROUND(s.score, 2) as score,
                     hp.round_name
                 FROM PWA_IWT_HEAT_SCORES s
@@ -1199,7 +1214,10 @@ async def get_athlete_event_stats(
         # 7. Get all heat scores with elimination type
         heat_scores_query = """
             SELECT
-                hr.heat_id as heat_number,
+                CASE
+                    WHEN hr.source = 'PWA' THEN SUBSTRING_INDEX(hr.heat_id, '_', -1)
+                    ELSE hr.heat_id
+                END as heat_number,
                 hp.round_name,
                 ROUND(hr.result_total, 2) as score,
                 hr.place,
@@ -1221,7 +1239,10 @@ async def get_athlete_event_stats(
         # 8. Get all jump scores with elimination type
         jump_scores_query = """
             SELECT
-                s.heat_id as heat_number,
+                CASE
+                    WHEN s.source = 'PWA' THEN SUBSTRING_INDEX(s.heat_id, '_', -1)
+                    ELSE s.heat_id
+                END as heat_number,
                 hp.round_name,
                 COALESCE(st.Type_Name, s.type) as move,
                 ROUND(s.score, 2) as score,
@@ -1245,7 +1266,10 @@ async def get_athlete_event_stats(
         # 9. Get all wave scores with elimination type
         wave_scores_query = """
             SELECT
-                s.heat_id as heat_number,
+                CASE
+                    WHEN s.source = 'PWA' THEN SUBSTRING_INDEX(s.heat_id, '_', -1)
+                    ELSE s.heat_id
+                END as heat_number,
                 hp.round_name,
                 ROUND(s.score, 2) as score,
                 COALESCE(s.counting, FALSE) as counting,

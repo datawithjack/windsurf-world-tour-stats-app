@@ -78,12 +78,12 @@ const HeadToHeadComparison = ({ eventId, gender }: HeadToHeadComparisonProps) =>
 
   return (
     <div className="space-y-6">
-      {/* Athlete Selection */}
+      {/* Athlete Selection - always on same row */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3"
+        className="flex flex-row flex-wrap items-center gap-3"
       >
         <SearchableSelect
           options={athlete1Options}
@@ -92,7 +92,7 @@ const HeadToHeadComparison = ({ eventId, gender }: HeadToHeadComparisonProps) =>
           placeholder="Select first athlete..."
           aria-label="Select first athlete to compare"
           disabled={athleteListLoading}
-          className="sm:min-w-[250px] flex-1"
+          className="min-w-[180px] flex-1"
         />
 
         <SearchableSelect
@@ -102,7 +102,7 @@ const HeadToHeadComparison = ({ eventId, gender }: HeadToHeadComparisonProps) =>
           placeholder="Select second athlete..."
           aria-label="Select second athlete to compare"
           disabled={athleteListLoading}
-          className="sm:min-w-[250px] flex-1"
+          className="min-w-[180px] flex-1"
         />
       </motion.div>
 
