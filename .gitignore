@@ -152,3 +152,4 @@ geckodriver.exe
 tmpclaude-*
 **/tmpclaude-*
 nul
+temp_events.json
