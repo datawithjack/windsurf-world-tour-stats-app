@@ -45,7 +45,8 @@ npm run dev:backend     # FastAPI on localhost:8000
 | TanStack Query | FastAPI | Caching + automatic retries |
 
 **Production API**: https://windsurf-world-tour-stats-api.duckdns.org
-**Production Frontend**: Deployed on Vercel
+**Production Frontend**: https://windsurfworldtourstats.com (Vercel)
+**Dev Preview**: Vercel auto-deploys `dev` branch to preview URL
 
 ---
 
@@ -101,8 +102,8 @@ Remind the user about available slash commands when relevant:
 | `/new-component` | User wants to create a React component |
 | `/query-db` | User wants to check data or run a query |
 | `/add-feature` | User mentions a new idea or feature request |
-| `/ship` | User wants to commit, push, and merge to main |
-| `/commit-push` | User wants to commit and push without merging |
+| `/ship` | User wants to deploy to production (from dev branch) |
+| `/commit-push` | User wants to save work to dev or feature branch |
 
 **Prompt the user** if they haven't used commands in a while and one would help.
 
@@ -111,9 +112,11 @@ Remind the user about available slash commands when relevant:
 ## Key Conventions
 
 ### Git Workflow
-- **Always ask before creating a new branch**
-- Main branch for stable code
-- Feature branches for new work
+- **`dev` branch** for active development (Vercel preview deploys here)
+- **`main` branch** for production (auto-deploys to windsurfworldtourstats.com)
+- **Feature branches** for isolated work → merge to `dev`
+- `/commit-push` commits to current branch (blocks `main`)
+- `/ship` merges `dev` → `main` (deploys to production)
 
 ### Terminology
 - Use **"Athlete"** not "Rider" (standardizing across codebase)
@@ -158,6 +161,7 @@ Remind the user about available slash commands when relevant:
 
 ## Important Links
 
+- **Production**: https://windsurfworldtourstats.com
 - **API Docs**: https://windsurf-world-tour-stats-api.duckdns.org/docs
-- **GitHub**: (add your repo URL)
+- **GitHub**: https://github.com/datawithjack/windsurf-world-tour-stats-app
 - **Backlog**: `docs/BACKLOG.md`

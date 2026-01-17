@@ -12,7 +12,10 @@
 
 ## Git Workflow
 
-**ALWAYS ask before creating a new branch.**
+- **`dev` branch** for active development (Vercel preview deploys here)
+- **`main` branch** for production (auto-deploys to windsurfworldtourstats.com)
+- `/commit-push` saves work to dev or feature branch (blocks main)
+- `/ship` merges dev → main (deploys to production)
 
 ---
 
