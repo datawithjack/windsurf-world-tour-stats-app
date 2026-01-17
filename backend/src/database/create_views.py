@@ -392,18 +392,72 @@ def create_event_stats_view(cursor):
     print("  [OK] EVENT_STATS_VIEW created successfully")
 
 
+def create_site_stats_view(cursor):
+    """
+    Create a view for site-wide statistics displayed on the landing page.
+
+    This view returns metric/value pairs for:
+    - total_events: Count of events containing "wave" in event_name
+    - total_athletes: Count of unique athletes that appear in event results
+    - total_results: Count of total result records
+    - years_covered: Range of years in the database
+
+    Note: Events are filtered to only include wave discipline events.
+    Athletes are counted from actual event results, not the full ATHLETES table.
+    """
+
+    print("\nCreating SITE_STATS_VIEW...")
+
+    # Drop view if exists
+    cursor.execute("DROP VIEW IF EXISTS SITE_STATS_VIEW")
+
+    # Create view with metric/value pairs
+    # Note: Metric names use spaces to match frontend expectations
+    view_sql = """
+    CREATE VIEW SITE_STATS_VIEW AS
+    SELECT 'total events' AS metric,
+           CAST(COUNT(DISTINCT id) AS CHAR) AS value
+    FROM PWA_IWT_EVENTS
+    WHERE LOWER(event_name) LIKE '%wave%'
+       OR LOWER(all_disciplines) LIKE '%wave%'
+       OR has_wave_discipline = TRUE
+
+    UNION ALL
+
+    SELECT 'total athletes' AS metric,
+           CAST(COUNT(DISTINCT asi.athlete_id) AS CHAR) AS value
+    FROM PWA_IWT_RESULTS r
+    INNER JOIN ATHLETE_SOURCE_IDS asi
+        ON r.source = asi.source
+        AND r.athlete_id = asi.source_id
+
+    UNION ALL
+
+    SELECT 'total scores' AS metric,
+           CAST(COUNT(*) AS CHAR) AS value
+    FROM PWA_IWT_HEAT_SCORES
+
+    UNION ALL
+
+    SELECT 'years_covered' AS metric,
+           CONCAT(MIN(year), '-', MAX(year)) AS value
+    FROM PWA_IWT_EVENTS
+    WHERE LOWER(event_name) LIKE '%wave%'
+       OR LOWER(all_disciplines) LIKE '%wave%'
+       OR has_wave_discipline = TRUE
+    """
+
+    cursor.execute(view_sql)
+    print("  [OK] SITE_STATS_VIEW created successfully")
+
+
 def create_event_info_view(cursor):
     """
     Create a view for event listing with athlete counts.
 
     This view:
-    - Lists all events with metadata
+    - Lists all events with metadata (PWA and LiveHeats)
     - Counts total athletes (men/women) from results
-    - Only shows PWA source events to avoid duplicates (LiveHeats events
-      that are also in PWA would appear twice otherwise)
-
-    NOTE: Results are joined by event_id only (not source) so that
-    LiveHeats results count toward the PWA event's totals.
     """
 
     print("\nCreating EVENT_INFO_VIEW...")
@@ -545,6 +599,7 @@ def main():
         create_athlete_heat_results_view(cursor)
         create_athlete_summary_view(cursor)
         create_event_stats_view(cursor)
+        create_site_stats_view(cursor)
         create_event_info_view(cursor)
 
         # Commit changes
@@ -563,7 +618,8 @@ def main():
         print("2. ATHLETE_HEAT_RESULTS_VIEW - Heat-by-heat results with athlete profiles")
         print("3. ATHLETE_SUMMARY_VIEW - Career statistics for each athlete")
         print("4. EVENT_STATS_VIEW - Event statistics with score types and move names")
-        print("5. EVENT_INFO_VIEW - Event listing with athlete counts (PWA events only)")
+        print("5. SITE_STATS_VIEW - Site-wide statistics for landing page")
+        print("6. EVENT_INFO_VIEW - Event listing with athlete counts")
 
     except mysql.connector.Error as err:
         print(f"\n[ERROR] DATABASE ERROR: {err}")
