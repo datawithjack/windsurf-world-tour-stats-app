@@ -26,6 +26,8 @@ interface MoveTypeData {
 interface EventStatsChartProps {
   data: MoveTypeData[];
   isLoading?: boolean;
+  /** Show fleet comparison markers (yellow=fleet avg, red=fleet best). Default false. */
+  showFleetComparison?: boolean;
 }
 
 // Helper to safely format numbers
@@ -88,7 +90,7 @@ const CustomTooltip = (props: any) => {
 };
 
 
-const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
+const EventStatsChart = ({ data, isLoading = false, showFleetComparison = false }: EventStatsChartProps) => {
   if (isLoading) {
     return (
       <div className="w-full space-y-4">
@@ -128,14 +130,18 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
           <div className="w-3 h-3 rounded-full bg-slate-600"></div>
           <span className="text-gray-400">Avg Counting Score</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-0.5 bg-amber-500"></div>
-          <span className="text-gray-400">Fleet Best</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-0.5 bg-gray-400 border-t-2 border-dashed border-gray-400"></div>
-          <span className="text-gray-400">Fleet Avg</span>
-        </div>
+        {showFleetComparison && (
+          <>
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-4 bg-red-500"></div>
+              <span className="text-gray-400">Fleet Best</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-4 bg-yellow-400"></div>
+              <span className="text-gray-400">Fleet Avg</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Chart */}
@@ -156,23 +162,7 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
             width={80}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(45, 212, 191, 0.1)' }} />
-          {/* Fleet Best reference marker - thin amber bar */}
-          <Bar
-            dataKey="fleetBest"
-            name="Fleet Best"
-            fill="#f59e0b"
-            barSize={3}
-            animationDuration={800}
-          />
-          {/* Fleet Average reference marker - thin gray bar */}
-          <Bar
-            dataKey="fleetAverage"
-            name="Fleet Avg"
-            fill="#9ca3af"
-            barSize={2}
-            animationDuration={800}
-          />
-          {/* Athlete's best score bar */}
+          {/* Best score bar */}
           <Bar
             dataKey="best"
             name="Best Score"
@@ -187,7 +177,7 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
               formatter={(value: any) => (typeof value === 'number' && !isNaN(value) && isFinite(value)) ? `${value.toFixed(2)} pts` : ''}
             />
           </Bar>
-          {/* Athlete's average score bar */}
+          {/* Average score bar */}
           <Bar
             dataKey="average"
             name="Average Score"
@@ -202,6 +192,25 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
               formatter={(value: any) => (typeof value === 'number' && !isNaN(value) && isFinite(value)) ? `${value.toFixed(2)} pts` : ''}
             />
           </Bar>
+          {/* Fleet comparison markers - rendered ON TOP of bars when enabled */}
+          {showFleetComparison && (
+            <>
+              <Bar
+                dataKey="fleetBest"
+                name="Fleet Best"
+                fill="#ef4444"
+                barSize={3}
+                animationDuration={800}
+              />
+              <Bar
+                dataKey="fleetAverage"
+                name="Fleet Avg"
+                fill="#facc15"
+                barSize={3}
+                animationDuration={800}
+              />
+            </>
+          )}
         </BarChart>
       </ResponsiveContainer>
     </div>

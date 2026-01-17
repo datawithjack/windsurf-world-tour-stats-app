@@ -437,9 +437,9 @@ const AthleteDetailPanel = ({ data, hasActiveFilters = false }: AthleteDetailPan
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Best and Average Score by Type */}
+        {/* Best and Average Score by Type - with fleet comparison */}
         <FeatureCard title="Best and Average Counting Score by Type" isLoading={false}>
-          <EventStatsChart data={chartData} />
+          <EventStatsChart data={chartData} showFleetComparison={true} />
         </FeatureCard>
 
         {/* Heat Scores */}
