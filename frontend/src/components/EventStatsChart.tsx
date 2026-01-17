@@ -38,6 +38,54 @@ const safeToFixed = (value: any, decimals: number = 2): string => {
   return '0.00';
 };
 
+// Custom bar shape that includes fleet marker overlaid on the bar
+const BarWithFleetMarker = (props: any) => {
+  const { x, y, width, height, fill, payload, dataKey, showFleetComparison } = props;
+
+  if (!width || width < 0) return null;
+
+  // Calculate the scale factor (pixels per point)
+  const value = payload?.[dataKey] || 0;
+  const pixelsPerPoint = value > 0 ? width / value : 0;
+
+  // Determine which fleet marker to show based on which bar this is
+  const isBestBar = dataKey === 'best';
+  const isAvgBar = dataKey === 'average';
+
+  // Fleet Best marker on Best bar, Fleet Avg marker on Average bar
+  const fleetValue = isBestBar ? payload?.fleetBest : (isAvgBar ? payload?.fleetAverage : 0);
+  const fleetX = fleetValue > 0 ? x + (fleetValue * pixelsPerPoint) : null;
+  const markerColor = isBestBar ? '#ef4444' : '#facc15'; // red for best, yellow for avg
+
+  const showMarker = showFleetComparison && fleetX !== null;
+
+  return (
+    <g>
+      {/* Main bar */}
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={fill}
+        rx={4}
+        ry={4}
+      />
+      {/* Fleet marker - spans only this bar's height */}
+      {showMarker && (
+        <rect
+          x={fleetX - 1.5}
+          y={y}
+          width={3}
+          height={height}
+          fill={markerColor}
+          rx={1}
+        />
+      )}
+    </g>
+  );
+};
+
 // Custom Tooltip Component
 const CustomTooltip = (props: any) => {
   const { active, payload, label } = props;
@@ -71,12 +119,12 @@ const CustomTooltip = (props: any) => {
           <div className="border-t border-slate-700 pt-2 mt-2">
             <p className="text-xs text-gray-500 mb-1">Fleet Comparison:</p>
             {data.fleetBest > 0 && (
-              <p className="text-xs text-amber-400">
+              <p className="text-xs text-red-400">
                 Fleet Best: {safeToFixed(data.fleetBest)} pts
               </p>
             )}
             {data.fleetAverage > 0 && (
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-yellow-400">
                 Fleet Avg: {safeToFixed(data.fleetAverage)} pts
               </p>
             )}
@@ -162,13 +210,13 @@ const EventStatsChart = ({ data, isLoading = false, showFleetComparison = false 
             width={80}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(45, 212, 191, 0.1)' }} />
-          {/* Best score bar */}
+          {/* Best score bar with Fleet Best marker */}
           <Bar
             dataKey="best"
             name="Best Score"
             fill="#2dd4bf"
-            radius={[0, 4, 4, 0]}
             animationDuration={800}
+            shape={(props: any) => <BarWithFleetMarker {...props} showFleetComparison={showFleetComparison} />}
           >
             <LabelList
               dataKey="best"
@@ -177,13 +225,13 @@ const EventStatsChart = ({ data, isLoading = false, showFleetComparison = false 
               formatter={(value: any) => (typeof value === 'number' && !isNaN(value) && isFinite(value)) ? `${value.toFixed(2)} pts` : ''}
             />
           </Bar>
-          {/* Average score bar */}
+          {/* Average score bar with Fleet Avg marker */}
           <Bar
             dataKey="average"
             name="Average Score"
             fill="#64748b"
-            radius={[0, 4, 4, 0]}
             animationDuration={800}
+            shape={(props: any) => <BarWithFleetMarker {...props} showFleetComparison={showFleetComparison} />}
           >
             <LabelList
               dataKey="average"
@@ -192,25 +240,6 @@ const EventStatsChart = ({ data, isLoading = false, showFleetComparison = false 
               formatter={(value: any) => (typeof value === 'number' && !isNaN(value) && isFinite(value)) ? `${value.toFixed(2)} pts` : ''}
             />
           </Bar>
-          {/* Fleet comparison markers - rendered ON TOP of bars when enabled */}
-          {showFleetComparison && (
-            <>
-              <Bar
-                dataKey="fleetBest"
-                name="Fleet Best"
-                fill="#ef4444"
-                barSize={3}
-                animationDuration={800}
-              />
-              <Bar
-                dataKey="fleetAverage"
-                name="Fleet Avg"
-                fill="#facc15"
-                barSize={3}
-                animationDuration={800}
-              />
-            </>
-          )}
         </BarChart>
       </ResponsiveContainer>
     </div>
