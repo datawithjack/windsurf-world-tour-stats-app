@@ -44,11 +44,30 @@ A single place to track feature ideas, improvements, and bugs.
 
 ---
 
-## Planned
+## MVP (Phase 1) - Events Only
 
-*Agreed upon - will implement*
+*Launching with event browsing and detailed event stats*
 
-### Frontend Improvements
+- [x] Landing page with global statistics
+- [x] Events browsing with filters (year, type, status)
+- [x] Event Results with stats, charts, scores
+- [x] Athlete Stats per event
+- [x] Production deployment (API + Frontend)
+- [ ] **Final polish and launch**
+
+---
+
+## Phase 2 - Athletes & Search
+
+*After MVP launch*
+
+### New Features
+
+- [ ] **Athletes page** - Browse all athletes, search, filter by nationality
+- [ ] **Head-to-Heads page** - Global head-to-head comparisons (not just per-event)
+- [ ] **Search functionality** - Search events and athletes from navigation
+
+### Code Quality
 
 - [ ] **Add axios error interceptors** - Global error handling so users see helpful messages
 - [ ] **Remove unused API methods** - Clean up `getRiders`, `getFeaturedRider`, `getHeats`, `getQuickStats`
@@ -57,17 +76,8 @@ A single place to track feature ideas, improvements, and bugs.
 - [ ] **Extract ComingSoon component** - Move from App.tsx to own file
 - [ ] **Add React Error Boundary** - Graceful error display instead of white screen
 - [ ] **Add Vitest tests** - Basic tests for API service layer
-
-### Backend Improvements
-
 - [ ] **Add pytest tests** - Test API endpoints
 - [ ] **Input validation tests** - Edge cases and error scenarios
-
-### New Features
-
-- [ ] **Athletes page** - Browse all athletes, search, filter by nationality
-- [ ] **Head-to-Heads page** - Global head-to-head comparisons (not just per-event)
-- [ ] **Search functionality** - Search events and athletes from navigation
 
 ---
 

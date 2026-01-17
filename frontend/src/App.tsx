@@ -4,7 +4,7 @@ import Navigation from './components/Navigation';
 import LandingPage from './pages/LandingPage';
 import EventsPage from './pages/EventsPage';
 import EventResultsPage from './pages/EventResultsPage';
-import ComingSoon from './components/ComingSoon';
+// Phase 2: import ComingSoon from './components/ComingSoon';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Create a client
@@ -28,9 +28,10 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/events" element={<EventsPage />} />
               <Route path="/events/:id" element={<EventResultsPage />} />
-              {/* Placeholder routes for future pages */}
+              {/* Phase 2: Uncomment when ready
               <Route path="/athletes" element={<ComingSoon page="Athletes" />} />
               <Route path="/head-to-heads" element={<ComingSoon page="Head to Heads" />} />
+              */}
             </Routes>
           </div>
         </Router>

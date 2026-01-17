@@ -7,9 +7,10 @@ const Navigation = () => {
   const location = useLocation();
 
   const navItems = [
-    { name: 'ATHLETES', path: '/athletes', disabled: false },
-    { name: 'HEAD TO HEADS', path: '/head-to-heads', disabled: false },
     { name: 'EVENTS', path: '/events', disabled: false },
+    // Phase 2: Uncomment when ready
+    // { name: 'ATHLETES', path: '/athletes', disabled: false },
+    // { name: 'HEAD TO HEADS', path: '/head-to-heads', disabled: false },
   ];
 
   const isActive = (path: string) => location.pathname === path;
