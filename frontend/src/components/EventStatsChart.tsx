@@ -122,13 +122,7 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
           barCategoryGap="30%"
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
-          <XAxis
-            type="number"
-            stroke="#9ca3af"
-            style={{ fontSize: '14px', fontWeight: 500 }}
-            domain={[0, 10]}
-            label={{ value: 'pts', position: 'insideBottomRight', fill: '#9ca3af', fontSize: 12, offset: 0 }}
-          />
+          <XAxis type="number" hide domain={[0, 10]} />
           <YAxis
             type="category"
             dataKey="type"
@@ -148,7 +142,7 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
               dataKey="best"
               position="right"
               style={{ fill: '#f1f5f9', fontSize: '12px', fontWeight: 600 }}
-              formatter={(value: any) => (typeof value === 'number' && !isNaN(value) && isFinite(value)) ? value.toFixed(2) : ''}
+              formatter={(value: any) => (typeof value === 'number' && !isNaN(value) && isFinite(value)) ? `${value.toFixed(2)} pts` : ''}
             />
           </Bar>
           <Bar
@@ -162,7 +156,7 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
               dataKey="average"
               position="right"
               style={{ fill: '#cbd5e1', fontSize: '12px', fontWeight: 500 }}
-              formatter={(value: any) => (typeof value === 'number' && !isNaN(value) && isFinite(value)) ? value.toFixed(2) : ''}
+              formatter={(value: any) => (typeof value === 'number' && !isNaN(value) && isFinite(value)) ? `${value.toFixed(2)} pts` : ''}
             />
           </Bar>
         </BarChart>

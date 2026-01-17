@@ -268,7 +268,7 @@ const AthleteStatsTab = ({
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start gap-6 pr-0 sm:pr-32">
+        <div className="flex flex-col sm:flex-row items-start gap-6 pr-28 sm:pr-32">
           {/* Profile Photo and Name - Mobile */}
           <div className="flex items-start gap-4 sm:gap-6 w-full sm:w-auto">
             <div className="flex-shrink-0">

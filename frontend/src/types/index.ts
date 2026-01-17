@@ -290,6 +290,7 @@ export interface MoveTypeScore {
   best_score: number;
   average_score: number;
   fleet_average: number;
+  fleet_best: number;
 }
 
 export interface HeatScore {

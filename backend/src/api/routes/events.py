@@ -887,6 +887,9 @@ async def get_athlete_event_stats(
     event_id: int,
     athlete_id: int,
     sex: str = Query(None, description="Gender division filter ('Women' or 'Men', optional - auto-detect)"),
+    elimination: Optional[str] = Query(None, description="Filter by elimination type ('Single' or 'Double')"),
+    round_name: Optional[str] = Query(None, description="Filter by round name (e.g., 'Round 7')"),
+    heat_number: Optional[str] = Query(None, description="Filter by heat number (e.g., '19a')"),
     db: DatabaseManager = Depends(get_db)
 ):
     """
@@ -1183,6 +1186,7 @@ async def get_athlete_event_stats(
                 ) for row in tied_results]
 
         # 6. Get move type scores (includes Wave and all jump types)
+        # Fleet stats are filter-aware: when filtering to a specific round/heat, fleet stats show only those scores
         move_type_query = """
             SELECT
                 COALESCE(st.Type_Name, s.type) as move_type,
@@ -1196,11 +1200,32 @@ async def get_athlete_event_stats(
                     JOIN ATHLETE_SOURCE_IDS asi3 ON asi3.athlete_id = asi2.athlete_id AND asi3.source = e2.source
                     JOIN PWA_IWT_RESULTS r2 ON r2.source = e2.source AND r2.event_id = e2.event_id
                         AND r2.athlete_id = asi3.source_id
+                    LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp2 ON hp2.heat_id = s2.heat_id
                     WHERE e2.id = %s
                       AND r2.sex = %s
                       AND s2.type = s.type
                       AND COALESCE(s2.counting, FALSE) = TRUE
-                ) as fleet_average
+                      AND (%s IS NULL OR (CASE WHEN LOWER(hp2.elimination_name) LIKE '%%double%%' THEN 'Double' ELSE 'Single' END) = %s)
+                      AND (%s IS NULL OR hp2.round_name = %s)
+                      AND (%s IS NULL OR s2.heat_number = %s)
+                ) as fleet_average,
+                (
+                    SELECT ROUND(MAX(s2.score), 2)
+                    FROM PWA_IWT_HEAT_SCORES s2
+                    JOIN PWA_IWT_EVENTS e2 ON s2.source = e2.source AND s2.pwa_event_id = e2.event_id
+                    JOIN ATHLETE_SOURCE_IDS asi2 ON s2.source = asi2.source AND s2.athlete_id = asi2.source_id
+                    JOIN ATHLETE_SOURCE_IDS asi3 ON asi3.athlete_id = asi2.athlete_id AND asi3.source = e2.source
+                    JOIN PWA_IWT_RESULTS r2 ON r2.source = e2.source AND r2.event_id = e2.event_id
+                        AND r2.athlete_id = asi3.source_id
+                    LEFT JOIN PWA_IWT_HEAT_PROGRESSION hp2 ON hp2.heat_id = s2.heat_id
+                    WHERE e2.id = %s
+                      AND r2.sex = %s
+                      AND s2.type = s.type
+                      AND COALESCE(s2.counting, FALSE) = TRUE
+                      AND (%s IS NULL OR (CASE WHEN LOWER(hp2.elimination_name) LIKE '%%double%%' THEN 'Double' ELSE 'Single' END) = %s)
+                      AND (%s IS NULL OR hp2.round_name = %s)
+                      AND (%s IS NULL OR s2.heat_number = %s)
+                ) as fleet_best
             FROM PWA_IWT_HEAT_SCORES s
             JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND s.source = e.source
             JOIN ATHLETE_SOURCE_IDS asi ON s.source = asi.source AND s.athlete_id = asi.source_id
@@ -1209,7 +1234,11 @@ async def get_athlete_event_stats(
             GROUP BY s.type, st.Type_Name
             ORDER BY best_score DESC
         """
-        move_type_results = db.execute_query(move_type_query, (event_id, detected_sex, athlete_id, event_id))
+        move_type_results = db.execute_query(move_type_query, (
+            event_id, detected_sex, elimination, elimination, round_name, round_name, heat_number, heat_number,
+            event_id, detected_sex, elimination, elimination, round_name, round_name, heat_number, heat_number,
+            athlete_id, event_id
+        ))
 
         # 7. Get all heat scores with elimination type
         heat_scores_query = """

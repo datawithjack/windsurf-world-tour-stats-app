@@ -7,13 +7,15 @@ import H2HStatBar from './H2HStatBar';
 import H2HAthleteCard from './H2HAthleteCard';
 import H2HOverviewCard from './H2HOverviewCard';
 import SearchableSelect from './ui/SearchableSelect';
+import Select from './ui/Select';
 
 interface HeadToHeadComparisonProps {
   eventId: number;
   gender: 'Men' | 'Women';
+  onGenderChange?: (gender: 'Men' | 'Women') => void;
 }
 
-const HeadToHeadComparison = ({ eventId, gender }: HeadToHeadComparisonProps) => {
+const HeadToHeadComparison = ({ eventId, gender, onGenderChange }: HeadToHeadComparisonProps) => {
   const [athlete1Id, setAthlete1Id] = useState<number | null>(null);
   const [athlete2Id, setAthlete2Id] = useState<number | null>(null);
   const [athlete1ImageError, setAthlete1ImageError] = useState(false);
@@ -78,13 +80,24 @@ const HeadToHeadComparison = ({ eventId, gender }: HeadToHeadComparisonProps) =>
 
   return (
     <div className="space-y-6">
-      {/* Athlete Selection - always on same row */}
+      {/* All filters on single row: Gender + Athlete 1 + Athlete 2 */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className="flex flex-row flex-wrap items-center gap-3"
       >
+        {onGenderChange && (
+          <Select
+            value={gender === 'Men' ? 'men' : 'women'}
+            onChange={(e) => onGenderChange(e.target.value === 'men' ? 'Men' : 'Women')}
+            aria-label="Filter by gender"
+          >
+            <option value="men">Men</option>
+            <option value="women">Women</option>
+          </Select>
+        )}
+
         <SearchableSelect
           options={athlete1Options}
           value={athlete1Id}

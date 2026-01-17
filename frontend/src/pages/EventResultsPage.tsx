@@ -421,7 +421,8 @@ const EventResultsPage = () => {
         </div>
       </section>
 
-      {/* Filters Section */}
+      {/* Filters Section - hidden for H2H tab (gender filter moves inline there) */}
+      {activeTab !== 'head-to-head' && (
       <section className="px-4 sm:px-6 lg:px-8 py-4 pb-2">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3 flex-wrap">
@@ -569,6 +570,7 @@ const EventResultsPage = () => {
           </div>
         </div>
       </section>
+      )}
 
       {/* Tab Content */}
       <section className="px-4 sm:px-6 lg:px-8 py-6 pb-20">
@@ -604,6 +606,7 @@ const EventResultsPage = () => {
             <HeadToHeadComparison
               eventId={event?.id || 0}
               gender={genderFilter === 'men' ? 'Men' : 'Women'}
+              onGenderChange={(g) => handleGenderChange(g === 'Men' ? 'men' : 'women')}
             />
           )}
         </div>

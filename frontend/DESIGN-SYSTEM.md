@@ -249,6 +249,27 @@ For head-to-head athlete comparisons, use:
 
 These colors work harmoniously together as both are cool, blue-based tones, creating visual cohesion while maintaining clear distinction.
 
+### Chart Colors
+
+#### Heat Scores Chart (AthleteHeatScoresChart)
+Bar chart showing heat scores by elimination type:
+- **Single Elimination**: Cyan (`#22d3ee`, cyan-400)
+- **Double Elimination**: Indigo (`#6366f1`, indigo-500) - muted blue-purple that complements cyan
+- **Unknown/Default**: Slate (`#64748b`, slate-500)
+
+#### Event Stats Chart (EventStatsChart)
+Horizontal bar chart showing best/average by move type:
+- **Best Score**: Teal (`#2dd4bf`, teal-400)
+- **Average Score**: Slate (`#64748b`, slate-600)
+
+#### Chart Design Guidelines
+- **Legend dots**: Use circles (`rounded-full`), not squares
+- **Legend text**: Keep concise (e.g., "Single" not "Single Elimination")
+- **Height**: 350px standard for both chart types
+- **Grid**: `#334155` with 0.3 opacity, dashed (3 3)
+- **Axis stroke**: `#94a3b8` (slate-400)
+- **Label color**: `#f1f5f9` (slate-100) for values on bars
+
 ### Ocean Color Scale
 ```css
 ocean-50:  #f0f9ff

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList, ReferenceLine } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 
 interface HeatScoreData {
   roundName: string;
@@ -13,10 +13,10 @@ interface AthleteHeatScoresChartProps {
   isLoading?: boolean;
 }
 
-// Colors for elimination types - high contrast
+// Colors for elimination types
 const COLORS = {
   Single: '#22d3ee', // cyan-400
-  Double: '#8b5cf6', // violet-500
+  Double: '#6366f1', // indigo-500 (muted blue-purple, complements cyan)
   Default: '#64748b', // slate-500 for null/unknown
 };
 
@@ -58,29 +58,12 @@ const AthleteHeatScoresChart = ({ data, isLoading = false }: AthleteHeatScoresCh
     );
   }
 
-  // Sort data by elimination type (Single first), then by round order
+  // Sort data by heat number (smallest on left: 19a, 22a, 23a, 49a, 50a)
   const sortedData = useMemo(() => {
-    const getRoundOrder = (roundName: string): number => {
-      const lowerRound = roundName?.toLowerCase() || '';
-      if (lowerRound.includes('final')) {
-        if (lowerRound.includes('quarter')) return 900;
-        if (lowerRound.includes('semi')) return 950;
-        if (lowerRound === 'final' || lowerRound === 'finals') return 1000;
-      }
-      const roundMatch = roundName?.match(/round\s*(\d+)/i);
-      if (roundMatch) return parseInt(roundMatch[1], 10);
-      return 500;
-    };
-
     return [...data].sort((a, b) => {
-      // Sort by elimination type first (Single before Double, null last)
-      const typeOrder = { 'Single': 0, 'Double': 1, 'null': 2, 'undefined': 2 };
-      const aTypeOrder = typeOrder[a.type as keyof typeof typeOrder] ?? 2;
-      const bTypeOrder = typeOrder[b.type as keyof typeof typeOrder] ?? 2;
-      if (aTypeOrder !== bTypeOrder) return aTypeOrder - bTypeOrder;
-
-      // Then by round order
-      return getRoundOrder(a.roundName) - getRoundOrder(b.roundName);
+      const aHeatNum = parseInt(a.heatNumber?.replace(/[^\d]/g, '') || '0', 10);
+      const bHeatNum = parseInt(b.heatNumber?.replace(/[^\d]/g, '') || '0', 10);
+      return aHeatNum - bHeatNum;
     });
   }, [data]);
 
@@ -91,16 +74,6 @@ const AthleteHeatScoresChart = ({ data, isLoading = false }: AthleteHeatScoresCh
     // Create a unique identifier for x-axis
     label: item.heatNumber || `Heat ${index + 1}`,
   }));
-
-  // Find the boundary between Single and Double elimination for the reference line
-  const eliminationBoundaryIndex = useMemo(() => {
-    for (let i = 0; i < chartData.length - 1; i++) {
-      if (chartData[i].type !== chartData[i + 1].type && chartData[i].type && chartData[i + 1].type) {
-        return i + 0.5;
-      }
-    }
-    return null;
-  }, [chartData]);
 
   // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {
@@ -145,7 +118,7 @@ const AthleteHeatScoresChart = ({ data, isLoading = false }: AthleteHeatScoresCh
         fontSize={11}
         fontWeight={600}
       >
-        {value.toFixed(2)}
+        {`${value.toFixed(2)} pts`}
       </text>
     );
   };
@@ -159,26 +132,27 @@ const AthleteHeatScoresChart = ({ data, isLoading = false }: AthleteHeatScoresCh
 
     return (
       <g transform={`translate(${x},${y})`}>
-        {/* Heat number - top row */}
+        {/* Heat number - top row (larger) */}
         <text
           x={0}
           y={0}
-          dy={12}
+          dy={14}
           textAnchor="middle"
           fill="#e2e8f0"
-          fontSize={11}
-          fontWeight={500}
+          fontSize={16}
+          fontWeight={700}
         >
           {item.heatNumber || '-'}
         </text>
-        {/* Round name - middle row */}
+        {/* Round name - bottom row (larger) */}
         <text
           x={0}
           y={0}
-          dy={26}
+          dy={32}
           textAnchor="middle"
           fill="#94a3b8"
-          fontSize={9}
+          fontSize={13}
+          fontWeight={500}
         >
           {item.roundName?.replace('Round ', 'R') || ''}
         </text>
@@ -192,26 +166,26 @@ const AthleteHeatScoresChart = ({ data, isLoading = false }: AthleteHeatScoresCh
 
   return (
     <div>
-      {/* Legend */}
-      <div className="flex justify-center gap-6 mb-4 text-sm">
+      {/* Legend - dots only, no text labels */}
+      <div className="flex items-center justify-center gap-6 mb-4 text-sm">
         {hasSingle && (
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded" style={{ backgroundColor: COLORS.Single }}></div>
-            <span className="text-gray-400">Single Elimination</span>
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.Single }}></div>
+            <span className="text-gray-400 text-sm">Single</span>
           </div>
         )}
         {hasDouble && (
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded" style={{ backgroundColor: COLORS.Double }}></div>
-            <span className="text-gray-400">Double Elimination</span>
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.Double }}></div>
+            <span className="text-gray-400 text-sm">Double</span>
           </div>
         )}
       </div>
 
-      <ResponsiveContainer width="100%" height={320}>
+      <ResponsiveContainer width="100%" height={350}>
         <BarChart
           data={chartData}
-          margin={{ top: 30, right: 20, left: 20, bottom: 50 }}
+          margin={{ top: 30, right: 20, left: 20, bottom: 10 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
           <XAxis
@@ -219,24 +193,10 @@ const AthleteHeatScoresChart = ({ data, isLoading = false }: AthleteHeatScoresCh
             stroke="#94a3b8"
             tick={<HierarchicalTick />}
             interval={0}
-            height={50}
+            height={55}
           />
-          <YAxis
-            stroke="#94a3b8"
-            fontSize={11}
-            label={{ value: 'Score (pts)', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 11 }}
-          />
+          <YAxis hide />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(139, 92, 246, 0.1)' }} />
-
-          {/* Reference line between elimination types */}
-          {eliminationBoundaryIndex !== null && (
-            <ReferenceLine
-              x={chartData[Math.floor(eliminationBoundaryIndex)]?.label}
-              stroke="#475569"
-              strokeDasharray="4 4"
-              strokeWidth={2}
-            />
-          )}
 
           <Bar dataKey="score" radius={[4, 4, 0, 0]} maxBarSize={50}>
             <LabelList dataKey="score" content={renderCustomLabel} />
@@ -249,22 +209,6 @@ const AthleteHeatScoresChart = ({ data, isLoading = false }: AthleteHeatScoresCh
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-
-      {/* Elimination type labels at bottom */}
-      {(hasSingle || hasDouble) && (
-        <div className="flex justify-center gap-8 mt-2 text-xs text-gray-500">
-          {hasSingle && hasDouble ? (
-            <>
-              <span style={{ color: COLORS.Single }}>← Single Elimination</span>
-              <span style={{ color: COLORS.Double }}>Double Elimination →</span>
-            </>
-          ) : hasSingle ? (
-            <span style={{ color: COLORS.Single }}>Single Elimination</span>
-          ) : (
-            <span style={{ color: COLORS.Double }}>Double Elimination</span>
-          )}
-        </div>
-      )}
     </div>
   );
 };
