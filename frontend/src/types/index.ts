@@ -142,6 +142,7 @@ export interface MoveTypeStat {
   best_score: number;
   average_score: number;
   fleet_average: number;
+  fleet_best: number;
   best_scored_by: {
     athlete_name: string;
     athlete_id: string;

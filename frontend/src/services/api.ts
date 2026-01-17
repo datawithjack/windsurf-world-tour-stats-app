@@ -143,9 +143,24 @@ export const apiService = {
   },
 
   // Athlete Event Stats
-  async getAthleteEventStats(eventId: number, athleteId: number, sex?: 'Men' | 'Women'): Promise<AthleteStatsResponse> {
+  async getAthleteEventStats(
+    eventId: number,
+    athleteId: number,
+    sex?: 'Men' | 'Women',
+    filters?: {
+      elimination?: string;
+      round_name?: string;
+      heat_number?: string;
+    }
+  ): Promise<AthleteStatsResponse> {
+    const params: Record<string, string> = {};
+    if (sex) params.sex = sex;
+    if (filters?.elimination) params.elimination = filters.elimination;
+    if (filters?.round_name) params.round_name = filters.round_name;
+    if (filters?.heat_number) params.heat_number = filters.heat_number;
+
     const response = await api.get(`/events/${eventId}/athletes/${athleteId}/stats`, {
-      params: sex ? { sex } : undefined,
+      params: Object.keys(params).length > 0 ? params : undefined,
     });
     return response.data;
   },

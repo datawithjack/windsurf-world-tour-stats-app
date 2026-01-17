@@ -14,6 +14,7 @@ interface MoveTypeData {
   best: number;
   average: number;
   fleetAverage: number;
+  fleetBest: number;
   bestBy: {
     athlete: string;
     heat: string;
@@ -48,7 +49,7 @@ const CustomTooltip = (props: any) => {
         <p className="font-semibold text-white mb-2">{label}</p>
         {isBest && data.bestBy !== null ? (
           <>
-            <p className="text-sm text-gray-300 mb-1">
+            <p className="text-sm text-teal-400 mb-1">
               Best: {safeToFixed(data.best)} pts
             </p>
             <p className="text-xs text-gray-400">
@@ -60,8 +61,24 @@ const CustomTooltip = (props: any) => {
           </>
         ) : (
           <p className="text-sm text-gray-400">
-            {payload[0].name}: {safeToFixed(payload[0].value)} pts
+            Avg: {safeToFixed(data.average)} pts
           </p>
+        )}
+        {/* Fleet comparison section */}
+        {(data.fleetBest > 0 || data.fleetAverage > 0) && (
+          <div className="border-t border-slate-700 pt-2 mt-2">
+            <p className="text-xs text-gray-500 mb-1">Fleet Comparison:</p>
+            {data.fleetBest > 0 && (
+              <p className="text-xs text-amber-400">
+                Fleet Best: {safeToFixed(data.fleetBest)} pts
+              </p>
+            )}
+            {data.fleetAverage > 0 && (
+              <p className="text-xs text-gray-400">
+                Fleet Avg: {safeToFixed(data.fleetAverage)} pts
+              </p>
+            )}
+          </div>
         )}
       </div>
     );
@@ -102,14 +119,22 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
   return (
     <div className="w-full space-y-4">
       {/* Custom Legend at Top */}
-      <div className="flex items-center justify-center gap-6 text-sm">
+      <div className="flex items-center justify-center gap-4 text-sm flex-wrap">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-teal-400"></div>
           <span className="text-gray-400">Best Score</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-slate-600"></div>
-          <span className="text-gray-400">Average Counting Score</span>
+          <span className="text-gray-400">Avg Counting Score</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-0.5 bg-amber-500"></div>
+          <span className="text-gray-400">Fleet Best</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-0.5 bg-gray-400 border-t-2 border-dashed border-gray-400"></div>
+          <span className="text-gray-400">Fleet Avg</span>
         </div>
       </div>
 
@@ -131,6 +156,23 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
             width={80}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(45, 212, 191, 0.1)' }} />
+          {/* Fleet Best reference marker - thin amber bar */}
+          <Bar
+            dataKey="fleetBest"
+            name="Fleet Best"
+            fill="#f59e0b"
+            barSize={3}
+            animationDuration={800}
+          />
+          {/* Fleet Average reference marker - thin gray bar */}
+          <Bar
+            dataKey="fleetAverage"
+            name="Fleet Avg"
+            fill="#9ca3af"
+            barSize={2}
+            animationDuration={800}
+          />
+          {/* Athlete's best score bar */}
           <Bar
             dataKey="best"
             name="Best Score"
@@ -145,6 +187,7 @@ const EventStatsChart = ({ data, isLoading = false }: EventStatsChartProps) => {
               formatter={(value: any) => (typeof value === 'number' && !isNaN(value) && isFinite(value)) ? `${value.toFixed(2)} pts` : ''}
             />
           </Bar>
+          {/* Athlete's average score bar */}
           <Bar
             dataKey="average"
             name="Average Score"

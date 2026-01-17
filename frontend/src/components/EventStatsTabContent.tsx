@@ -98,6 +98,7 @@ const transformScoreData = (statsData: EventStatsResponse) => ({
       best: stat.best_score as number,
       average: stat.average_score as number,
       fleetAverage: stat.fleet_average ?? stat.average_score as number,
+      fleetBest: stat.fleet_best ?? stat.best_score as number,
       bestBy: stat.best_scored_by ? {
         athlete: stat.best_scored_by.athlete_name,
         heat: stat.best_scored_by.heat_number?.toString() || '',
@@ -340,6 +341,7 @@ const EventStatsTabContent = ({ statsData, isLoading, onAthleteClick, roundFilte
           best: Math.max(...validScores),
           average: validScores.reduce((a, b) => a + b, 0) / validScores.length,
           fleetAverage: validScores.reduce((a, b) => a + b, 0) / validScores.length,
+          fleetBest: Math.max(...validScores),
           bestBy: stat.bestBy,
         };
       })

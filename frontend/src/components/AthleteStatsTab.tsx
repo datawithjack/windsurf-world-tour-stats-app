@@ -146,9 +146,14 @@ const AthleteStatsTab = ({
   }, [selectedAthleteId]);
 
   // Fetch athlete stats from API
+  // Pass filters to API so fleet stats (fleet_average, fleet_best) are calculated correctly
   const { data: athleteStats, isLoading, error } = useQuery({
-    queryKey: ['athleteEventStats', eventId, selectedAthleteId, sex],
-    queryFn: () => apiService.getAthleteEventStats(eventId, selectedAthleteId!, sex),
+    queryKey: ['athleteEventStats', eventId, selectedAthleteId, sex, eliminationFilter, roundFilter, heatFilter],
+    queryFn: () => apiService.getAthleteEventStats(eventId, selectedAthleteId!, sex, {
+      elimination: eliminationFilter || undefined,
+      round_name: roundFilter || undefined,
+      heat_number: heatFilter || undefined,
+    }),
     enabled: !!eventId && !!selectedAthleteId,
     retry: 1,
   });
@@ -246,8 +251,8 @@ const AthleteStatsTab = ({
       <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6 pb-20 sm:pb-6 relative">
         {/* Overall Position Stat Box - Always top right */}
         <div className="absolute top-6 right-6">
-          <div className="bg-gradient-to-br from-teal-600/20 to-cyan-600/20 backdrop-blur-sm border border-teal-500/50 rounded-lg px-4 py-3 min-w-[100px] text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
+          <div className="w-24 h-24 bg-gradient-to-br from-teal-600/20 to-cyan-600/20 backdrop-blur-sm border border-teal-500/50 rounded-lg flex flex-col items-center justify-center">
+            <div className="flex items-center justify-center gap-1">
               {athleteStats.summary_stats?.overall_position <= 3 && (
                 <Trophy
                   className={`${
@@ -255,7 +260,7 @@ const AthleteStatsTab = ({
                     athleteStats.summary_stats.overall_position === 2 ? 'text-gray-300' :
                     'text-orange-400'
                   }`}
-                  size={16}
+                  size={14}
                 />
               )}
               <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Position</span>

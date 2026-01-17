@@ -349,7 +349,8 @@ const AthleteDetailPanel = ({ data, hasActiveFilters = false }: AthleteDetailPan
     type: score.move_type,
     best: score.best_score,
     average: score.average_score,
-    fleetAverage: score.fleet_average,
+    fleetAverage: score.fleet_average ?? 0,
+    fleetBest: score.fleet_best ?? 0,
     bestBy: {
       athlete: data.profile?.name || '',
       heat: '',
