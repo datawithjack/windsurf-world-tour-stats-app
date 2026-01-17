@@ -1207,7 +1207,7 @@ async def get_athlete_event_stats(
                       AND COALESCE(s2.counting, FALSE) = TRUE
                       AND (%s IS NULL OR (CASE WHEN LOWER(hp2.elimination_name) LIKE '%%double%%' THEN 'Double' ELSE 'Single' END) = %s)
                       AND (%s IS NULL OR hp2.round_name = %s)
-                      AND (%s IS NULL OR s2.heat_number = %s)
+                      AND (%s IS NULL OR (CASE WHEN s2.source = 'PWA' THEN SUBSTRING_INDEX(s2.heat_id, '_', -1) ELSE s2.heat_id END) = %s)
                 ) as fleet_average,
                 (
                     SELECT ROUND(MAX(s2.score), 2)
@@ -1224,7 +1224,7 @@ async def get_athlete_event_stats(
                       AND COALESCE(s2.counting, FALSE) = TRUE
                       AND (%s IS NULL OR (CASE WHEN LOWER(hp2.elimination_name) LIKE '%%double%%' THEN 'Double' ELSE 'Single' END) = %s)
                       AND (%s IS NULL OR hp2.round_name = %s)
-                      AND (%s IS NULL OR s2.heat_number = %s)
+                      AND (%s IS NULL OR (CASE WHEN s2.source = 'PWA' THEN SUBSTRING_INDEX(s2.heat_id, '_', -1) ELSE s2.heat_id END) = %s)
                 ) as fleet_best
             FROM PWA_IWT_HEAT_SCORES s
             JOIN PWA_IWT_EVENTS e ON s.pwa_event_id = e.event_id AND s.source = e.source
