@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     # CORS Settings
     CORS_ENABLED: bool = True
     CORS_ORIGINS: List[str] = [
+        "https://windsurfworldtourstats.com",
+        "https://www.windsurfworldtourstats.com",
         "https://windsurf-world-tour-stats-app.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000",
